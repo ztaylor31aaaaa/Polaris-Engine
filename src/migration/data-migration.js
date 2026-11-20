@@ -1,4 +1,5 @@
 const WEB = new Set(["http:", "https:"]);
+const PREFERENCE_KEYS = new Set(["theme", "reduceMotion", "reducedMotion", "restoreSession", "restoreTabs", "confirmCloseMultipleTabs", "confirmClose", "zoom", "language", "homepage", "searchTemplate", "showFullUrls", "compactMode", "showClock", "density", "corners", "customScrollbar"]);
 const text = (value, max = 160) => String(value ?? "").slice(0, max);
 function safeUrl(value) {
   try { const url = new URL(value); return WEB.has(url.protocol) ? url.href : null; } catch { return null; }
@@ -75,7 +76,7 @@ export function applyMigration(preview, { bookmarks = [], history = [], tabs = [
   return {
     bookmarks: combine(bookmarks, incoming.bookmarks, "url"),
     history: combine(history, incoming.history, "url").slice(0, 500),
-    tabs: incoming.tabs.slice(0, 40),
+    tabs: (mode === "replace" ? incoming.tabs : [...tabs, ...incoming.tabs]).slice(0, 40),
     settings: mode === "replace" ? { ...incoming.settings } : { ...settings, ...incoming.settings }
   };
 }
@@ -83,6 +84,6 @@ export function exportPortableData({ bookmarks = [], history = [], tabs = [], se
   return {
     app: "Polaris", format: "polaris-portable-data", schema: 1, exportedAt: new Date().toISOString(),
     bookmarks: bookmarkRows(bookmarks), history: historyRows(history), tabs: tabRows(tabs),
-    settings: { ...settings }
+    settings: Object.fromEntries(Object.entries(settings).filter(([key, value]) => PREFERENCE_KEYS.has(key) && ["string", "boolean", "number"].includes(typeof value)))
   };
 }
