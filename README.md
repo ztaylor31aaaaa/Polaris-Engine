@@ -1,6 +1,6 @@
 # Polaris Engine
 
-Polaris Engine is a modular browser-runtime framework for Polaris. Version 0.4 expands the foundation with platform feature detection, native worker management, MessagePort RPC, Cache Storage, DOM observation, URL inspection and MIME utilities.
+Polaris Engine is a modular browser-runtime framework for Polaris. Version 0.5 adds an explicit transport-provider lifecycle, validated connection timeouts, portable-data migration and browser bookmark HTML import on top of the modular runtime foundation.
 
 ## Feature groups
 
@@ -17,7 +17,7 @@ Polaris Engine is a modular browser-runtime framework for Polaris. Version 0.4 e
 - **Security:** scoped permission grants and URL origin policy.
 - **Extensibility:** extension lifecycle and application command registry.
 - **Utilities:** MIME lookup, URL metadata, same-origin checks, relative URL resolution and performance metrics.
-- **Diagnostics:** structured browser capability checks.
+- **Diagnostics:** structured browser capability checks.\n- **Transport configuration:** host-registered provider selection, explicit enable/disable, optional startup initialisation, cancellation, timeout and typed lifecycle errors. No provider is bundled or enabled by default.\n- **Data migration:** preview-first JSON and Netscape bookmark HTML import/export for bookmarks, history, tabs and non-sensitive preferences.
 
 ## Runtime safety
 
@@ -36,4 +36,4 @@ npm run check
 
 Polaris Engine is not a complete browser engine and does not yet have full Scramjet feature parity. Its view adapter uses normal browser iframe behaviour and is subject to browser security and framing policies. Platform APIs wrap native browser functionality rather than attempting to emulate every browser implementation detail.
 
-See [docs/ROADMAP.md](docs/ROADMAP.md).
+See [docs/ROADMAP.md](docs/ROADMAP.md), [docs/TRANSPORT.md](docs/TRANSPORT.md) and [docs/MIGRATION.md](docs/MIGRATION.md).
