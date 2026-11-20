@@ -1,21 +1,26 @@
 {
   "name": "@polaris/engine",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
   "type": "module",
-  "description": "Modular browser-runtime foundation for Polaris",
+  "description": "Modular browser-runtime framework for Polaris",
   "exports": {
     ".": "./src/index.js",
     "./navigation": "./src/navigation/controller.js",
     "./tabs": "./src/tabs/tab-manager.js",
     "./storage": "./src/storage/stores.js",
-    "./diagnostics": "./src/diagnostics/index.js"
+    "./diagnostics": "./src/diagnostics/index.js",
+    "./runtime": "./src/runtime/runtime-manager.js",
+    "./security": "./src/security/permissions.js",
+    "./settings": "./src/settings/settings-manager.js",
+    "./extensions": "./src/extensions/extension-registry.js",
+    "./commands": "./src/commands/command-registry.js",
+    "./telemetry": "./src/telemetry/performance-monitor.js",
+    "./adapters": "./src/adapters/view-adapter.js"
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/index.js && node --check src/navigation/controller.js && node --check src/tabs/tab-manager.js"
+    "check": "node --check src/index.js && node --check src/runtime/runtime-manager.js && node --check src/security/permissions.js && node --check src/settings/settings-manager.js && node --check src/extensions/extension-registry.js && node --check src/commands/command-registry.js && node --check src/telemetry/performance-monitor.js && node --check src/adapters/view-adapter.js"
   },
-  "engines": {
-    "node": ">=20"
-  }
+  "engines": { "node": ">=20" }
 }
