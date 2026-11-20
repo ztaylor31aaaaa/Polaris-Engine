@@ -20,7 +20,9 @@
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/index.js && node --check src/runtime/runtime-manager.js && node --check src/security/permissions.js && node --check src/settings/settings-manager.js && node --check src/extensions/extension-registry.js && node --check src/commands/command-registry.js && node --check src/telemetry/performance-monitor.js && node --check src/adapters/view-adapter.js"
+    "check": "node --check src/index.js && node --check src/runtime/disposable.js && node --check src/runtime/tab-runtime.js && node --check src/runtime/runtime-manager.js && node --check src/security/permissions.js && node --check src/security/origin-policy.js && node --check src/settings/settings-manager.js && node --check src/extensions/extension-registry.js && node --check src/commands/command-registry.js && node --check src/telemetry/performance-monitor.js && node --check src/adapters/view-adapter.js && node --check src/navigation/controller.js && node --check src/tabs/tab-manager.js && node --check src/storage/stores.js"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }
