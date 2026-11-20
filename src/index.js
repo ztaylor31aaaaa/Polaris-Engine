@@ -26,6 +26,7 @@ export { DOMObserver } from "./dom/dom-observer.js";
 export { mimeFromExtension, extensionFromMime, isTextMime, normaliseMime } from "./utils/mime.js";
 export { TransportProviderManager } from "./transport/provider-manager.js";
 export { inspectMigration, applyMigration, exportPortableData } from "./migration/data-migration.js";
+export { createFeatureProfile, createBrowserSurface, CompatibilityError } from "./compat/feature-profile.js";
 
 export const ENGINE_NAME = "Polaris Engine";
 export const ENGINE_VERSION = "0.5.0";
