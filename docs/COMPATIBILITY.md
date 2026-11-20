@@ -10,7 +10,7 @@ console.table(profile.features);
 profile.require(["fetch", "URL", "MessageChannel"]);
 
 const browser = createBrowserSurface({ profile });
-if (browser.supports?.("ReadableStream")) {
+if (profile.supports("ReadableStream")) {
   // Prefer checking profile.supports("ReadableStream") for feature gates.
 }
 ```
