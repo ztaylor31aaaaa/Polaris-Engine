@@ -35,3 +35,29 @@ test("MIME helpers map common extensions and validate values", () => {
   assert.equal(normaliseMime("TEXT/HTML; charset=utf-8"), "text/html");
   assert.equal(normaliseMime("not a mime"), "application/octet-stream");
 });
+
+import { PluginManager, UrlWatcher } from "../src/index.js";
+
+test("plugin manager enables dependencies before dependents and cleans them up", async () => {
+  const calls = [];
+  const manager = new PluginManager();
+  manager.register({ name: "base", setup: () => { calls.push("base+"); return () => calls.push("base-"); } });
+  manager.register({ name: "feature", dependencies: ["base"], setup: () => { calls.push("feature+"); return () => calls.push("feature-"); } });
+  await manager.enable("feature");
+  await manager.disable("base");
+  assert.deepEqual(calls, ["base+", "feature+", "feature-", "base-"]);
+});
+
+test("URL watcher notifies subscribers only when the observed URL changes", () => {
+  let href = "https://example.com/a";
+  const fakeWindow = { location: {}, addEventListener() {}, removeEventListener() {} };
+  Object.defineProperty(fakeWindow.location, "href", { get: () => href });
+  const watcher = new UrlWatcher(fakeWindow);
+  const changes = [];
+  watcher.subscribe(change => changes.push(change));
+  href = "https://example.com/b";
+  assert.equal(watcher.check(), true);
+  assert.equal(watcher.check(), false);
+  assert.equal(changes.length, 1);
+  watcher.stop();
+});
