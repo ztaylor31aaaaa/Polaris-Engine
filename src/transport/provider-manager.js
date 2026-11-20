@@ -7,11 +7,11 @@ const STATES = new Set(["disabled", "idle", "initialising", "ready", "connecting
  * Providers are supplied by the host application; the engine ships no proxy.
  */
 export class TransportProviderManager {
-  constructor({ providers = [], selected = null, enabled = false, autoInitialise = false, context = {} } = {}) {
+  constructor({ providers = [], selected = null, enabled = false, autoInitialise = false, connectTimeout = 15000, context = {} } = {}) {
     this.providers = new Map();
     this.selected = selected;
     this.enabled = Boolean(enabled);
-    this.autoInitialise = Boolean(autoInitialise);
+    this.autoInitialise = Boolean(autoInitialise);\n    this.connectTimeout = connectTimeout;
     this.context = context;
     this.state = this.enabled ? "idle" : "disabled";
     this.activeProvider = null;
@@ -28,9 +28,9 @@ export class TransportProviderManager {
   }
   list() { return [...this.providers.values()].map(({ id, name, version, capabilities = [] }) => ({ id, name: name || id, version: version || null, capabilities: [...capabilities] })); }
   status() { return { enabled: this.enabled, selected: this.selected, state: this.state, provider: this.activeProvider?.id || null }; }
-  async configure({ enabled = this.enabled, selected = this.selected, autoInitialise = this.autoInitialise } = {}) {
+  async configure({ enabled = this.enabled, selected = this.selected, autoInitialise = this.autoInitialise, connectTimeout = this.connectTimeout } = {}) {
     if (this.state === "disposed") throw new Error("Transport manager is disposed.");
-    if (selected != null && !this.providers.has(selected)) throw new Error("Unknown transport provider: " + selected);
+    if (selected != null && !this.providers.has(selected)) throw new Error("Unknown transport provider: " + selected);\n    if (!Number.isInteger(connectTimeout) || connectTimeout < 1000 || connectTimeout > 120000) throw new RangeError("Connect timeout must be between 1000 and 120000 ms.");
     if (!enabled) await this.disable();
     this.selected = selected;
     this.enabled = Boolean(enabled);
