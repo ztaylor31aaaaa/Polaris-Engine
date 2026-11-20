@@ -10,7 +10,7 @@ export class CacheStore {
   }
   async match(request, options) { return (await this.#cache()).match(request, options); }
   async put(request, response) {
-    if (!(response instanceof Response)) throw new TypeError("A Response object is required.");
+    if (typeof globalThis.Response !== "function" || !(response instanceof globalThis.Response)) throw new TypeError("A Response object is required.");
     if (!response.ok || response.status === 206) throw new TypeError("Only complete successful responses can be cached.");
     return (await this.#cache()).put(request, response.clone());
   }
