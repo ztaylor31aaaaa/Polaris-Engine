@@ -1,0 +1,21 @@
+{
+  "name": "@polaris/engine",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "Modular browser-runtime foundation for Polaris",
+  "exports": {
+    ".": "./src/index.js",
+    "./navigation": "./src/navigation/controller.js",
+    "./tabs": "./src/tabs/tab-manager.js",
+    "./storage": "./src/storage/stores.js",
+    "./diagnostics": "./src/diagnostics/index.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check src/index.js && node --check src/navigation/controller.js && node --check src/tabs/tab-manager.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
