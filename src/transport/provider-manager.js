@@ -32,7 +32,7 @@ export class TransportProviderManager {
     if (this.state === "disposed") throw new Error("Transport manager is disposed.");
     if (selected != null && !this.providers.has(selected)) throw new Error("Unknown transport provider: " + selected);
     if (!Number.isInteger(connectTimeout) || connectTimeout < 1000 || connectTimeout > 120000) throw new RangeError("Connect timeout must be between 1000 and 120000 ms.");
-    if (!enabled) await this.disable();
+    if (!enabled || (this.activeProvider && selected !== this.selected)) await this.disable();
     this.selected = selected;
     this.enabled = Boolean(enabled);
     this.autoInitialise = Boolean(autoInitialise);
