@@ -30,3 +30,21 @@ test("portable export can be re-imported", () => {
   const preview = inspectMigration(file);
   assert.equal(preview.counts.bookmarks, 1);
 });
+
+test("transport connection timeout aborts provider work", async () => {
+  const manager = new TransportProviderManager({
+    providers: [{ id: "slow", initialize: async () => {}, connect: ({ signal }) => new Promise((resolve, reject) => signal.addEventListener("abort", () => reject(new Error("aborted")), { once: true })) }],
+    selected: "slow", connectTimeout: 1000
+  });
+  await manager.configure({ enabled: true, selected: "slow", connectTimeout: 1000 });
+  await assert.rejects(manager.connect(), /timed out|aborted/i);
+  assert.equal(manager.status().state, "error");
+});
+
+test("migration excludes credential-like settings and merges tabs", () => {
+  const preview = inspectMigration({ settings: { theme: "dark", apiKey: "secret", accessToken: "secret" }, tabs: [{ url: "https://new.example" }] });
+  const result = applyMigration(preview, { tabs: [{ title: "Existing", url: "https://old.example" }] });
+  assert.equal(result.settings.apiKey, undefined);
+  assert.equal(result.settings.accessToken, undefined);
+  assert.equal(result.tabs.length, 2);
+});
