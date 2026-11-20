@@ -9,7 +9,7 @@ Polaris Engine 0.5.0 includes a portable JSON migration format and a preview-fir
 - Open-tab URLs, titles, pinned state and group labels
 - A limited allowlist of non-sensitive display and browser preferences
 
-The importer accepts Polaris portable JSON, common JSON arrays named `bookmarks`, `favorites`, `history`, `visits`, `tabs`, `openTabs`, and Chrome-style bookmark JSON trees under `roots`.
+The importer accepts Polaris portable JSON, Netscape bookmark HTML exports, Chrome-style bookmark JSON trees, and common JSON arrays named `bookmarks`, `favorites`, `history`, `visits`, `tabs`, `openTabs`, and Chrome-style bookmark JSON trees under `roots`.
 
 ## Scramjet and Ultraviolet
 
@@ -19,7 +19,7 @@ For an app built on either runtime:
 1. Use that app's own export/backup feature if it provides one.
 2. Export bookmarks from the host browser as JSON (or convert a Netscape bookmarks HTML export to JSON).
 3. If the app has a session export, include its tab list as a `tabs` array.
-4. Open Polaris Engine → Import, select the JSON file, inspect the counts, then choose Import and merge data.
+4. Open Polaris Engine → Import, select the JSON or HTML file, inspect the counts, then choose Import and merge data.
 
 Example portable file:
 
