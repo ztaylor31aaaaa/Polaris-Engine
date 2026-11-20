@@ -1,17 +1,17 @@
 import { EventBus } from "../utils/events.js";
 
-const STATES = new Set(["disabled", "idle", "initialising", "ready", "connecting", "connected", "error", "disposed"]);
-
 /**
  * Coordinates an explicitly selected transport provider.
  * Providers are supplied by the host application; the engine ships no proxy.
  */
 export class TransportProviderManager {
   constructor({ providers = [], selected = null, enabled = false, autoInitialise = false, connectTimeout = 15000, context = {} } = {}) {
+    if (!Number.isInteger(connectTimeout) || connectTimeout < 1000 || connectTimeout > 120000) throw new RangeError("Connect timeout must be between 1000 and 120000 ms.");
     this.providers = new Map();
     this.selected = selected;
     this.enabled = Boolean(enabled);
-    this.autoInitialise = Boolean(autoInitialise);\n    this.connectTimeout = connectTimeout;
+    this.autoInitialise = Boolean(autoInitialise);
+    this.connectTimeout = connectTimeout;
     this.context = context;
     this.state = this.enabled ? "idle" : "disabled";
     this.activeProvider = null;
@@ -27,14 +27,16 @@ export class TransportProviderManager {
     return provider;
   }
   list() { return [...this.providers.values()].map(({ id, name, version, capabilities = [] }) => ({ id, name: name || id, version: version || null, capabilities: [...capabilities] })); }
-  status() { return { enabled: this.enabled, selected: this.selected, state: this.state, provider: this.activeProvider?.id || null }; }
+  status() { return { enabled: this.enabled, selected: this.selected, state: this.state, provider: this.activeProvider?.id || null, connectTimeout: this.connectTimeout }; }
   async configure({ enabled = this.enabled, selected = this.selected, autoInitialise = this.autoInitialise, connectTimeout = this.connectTimeout } = {}) {
     if (this.state === "disposed") throw new Error("Transport manager is disposed.");
-    if (selected != null && !this.providers.has(selected)) throw new Error("Unknown transport provider: " + selected);\n    if (!Number.isInteger(connectTimeout) || connectTimeout < 1000 || connectTimeout > 120000) throw new RangeError("Connect timeout must be between 1000 and 120000 ms.");
+    if (selected != null && !this.providers.has(selected)) throw new Error("Unknown transport provider: " + selected);
+    if (!Number.isInteger(connectTimeout) || connectTimeout < 1000 || connectTimeout > 120000) throw new RangeError("Connect timeout must be between 1000 and 120000 ms.");
     if (!enabled) await this.disable();
     this.selected = selected;
     this.enabled = Boolean(enabled);
     this.autoInitialise = Boolean(autoInitialise);
+    this.connectTimeout = connectTimeout;
     if (this.enabled) this.state = "idle";
     this.events.emit("transport:configuration", this.status());
     if (this.enabled && this.autoInitialise) await this.initialise();
@@ -66,8 +68,21 @@ export class TransportProviderManager {
     if (typeof this.activeProvider.connect !== "function") throw new Error("Selected provider does not support connect().");
     this.state = "connecting";
     this.events.emit("transport:state", this.status());
+    const controller = new AbortController();
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        controller.abort();
+        const error = new Error("Transport connection timed out.");
+        error.code = "PROVIDER_TIMEOUT";
+        reject(error);
+      }, this.connectTimeout);
+    });
     try {
-      const result = await this.activeProvider.connect(options);
+      const result = await Promise.race([
+        Promise.resolve(this.activeProvider.connect({ ...options, signal: controller.signal })),
+        timeout
+      ]);
       this.state = "connected";
       this.events.emit("transport:connected", result);
       return result;
@@ -75,6 +90,8 @@ export class TransportProviderManager {
       this.state = "error";
       this.events.emit("transport:error", { stage: "connect", provider: this.selected, code: error?.code || "PROVIDER_CONNECT_FAILED", message: error?.message || "Provider connection failed." });
       throw error;
+    } finally {
+      clearTimeout(timer);
     }
   }
   async disable() {
