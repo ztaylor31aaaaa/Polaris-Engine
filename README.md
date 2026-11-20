@@ -8,7 +8,7 @@ Polaris Engine is a modular browser-runtime framework for Polaris. Version 0.5 a
 - **Tabs and sessions:** tab lifecycle, pinning, groups, closed-tab recovery and session serialisation.
 - **Runtime:** per-tab runtime lifecycle, resource disposal, abort scopes and runtime limits.
 - **Document views:** HTTP(S) iframe mounting and cleanup through an adapter.
-- **Platform APIs:** browser feature detection, native Web Worker lifecycle, MessagePort RPC and expanded diagnostics for 24 browser capabilities.
+- **Platform APIs:** browser feature detection, native Web Worker lifecycle, MessagePort RPC and expanded diagnostics for 25 browser capabilities.
 - **Frames:** iframe lifecycle controller, sandbox defaults, explicit-origin messaging and frame events.
 - **Plugins:** dependency-aware plugin activation, shutdown ordering and cleanup.
 - **URL watching:** detects history, hash and page lifecycle URL changes.
