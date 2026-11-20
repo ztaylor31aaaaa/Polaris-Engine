@@ -36,4 +36,4 @@ npm run check
 
 Polaris Engine is not a complete browser engine and does not yet have full Scramjet feature parity. Its view adapter uses normal browser iframe behaviour and is subject to browser security and framing policies. Platform APIs wrap native browser functionality rather than attempting to emulate every browser implementation detail.
 
-See [docs/ROADMAP.md](docs/ROADMAP.md), [docs/TRANSPORT.md](docs/TRANSPORT.md) and [docs/MIGRATION.md](docs/MIGRATION.md).
+See [docs/ROADMAP.md](docs/ROADMAP.md), [docs/TRANSPORT.md](docs/TRANSPORT.md) and [docs/MIGRATION.md](docs/MIGRATION.md) and [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
