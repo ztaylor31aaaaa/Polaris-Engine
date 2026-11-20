@@ -1,6 +1,6 @@
 # Polaris Engine
 
-Polaris Engine is a modular browser-runtime framework for Polaris. Version 0.3 expands the foundation with platform feature detection, native worker management, MessagePort RPC, Cache Storage, DOM observation, URL inspection and MIME utilities.
+Polaris Engine is a modular browser-runtime framework for Polaris. Version 0.4 expands the foundation with platform feature detection, native worker management, MessagePort RPC, Cache Storage, DOM observation, URL inspection and MIME utilities.
 
 ## Feature groups
 
@@ -8,12 +8,15 @@ Polaris Engine is a modular browser-runtime framework for Polaris. Version 0.3 e
 - **Tabs and sessions:** tab lifecycle, pinning, groups, closed-tab recovery and session serialisation.
 - **Runtime:** per-tab runtime lifecycle, resource disposal, abort scopes and runtime limits.
 - **Document views:** HTTP(S) iframe mounting and cleanup through an adapter.
-- **Platform APIs:** browser feature detection, native Web Worker lifecycle and MessagePort-based RPC.
+- **Platform APIs:** browser feature detection, native Web Worker lifecycle, MessagePort RPC and expanded diagnostics for 24 browser capabilities.
+- **Frames:** iframe lifecycle controller, sandbox defaults, explicit-origin messaging and frame events.
+- **Plugins:** dependency-aware plugin activation, shutdown ordering and cleanup.
+- **URL watching:** detects history, hash and page lifecycle URL changes.
 - **DOM:** MutationObserver wrapper with subscription and disposal.
 - **Storage:** JSON settings, bookmarks, history and Cache Storage wrapper.
 - **Security:** scoped permission grants and URL origin policy.
 - **Extensibility:** extension lifecycle and application command registry.
-- **Utilities:** MIME lookup, URL metadata and performance metrics.
+- **Utilities:** MIME lookup, URL metadata, same-origin checks, relative URL resolution and performance metrics.
 - **Diagnostics:** structured browser capability checks.
 
 ## Runtime safety
