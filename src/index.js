@@ -1,8 +1,10 @@
 export { EventBus } from "./utils/events.js";
 export { resolveAddress, isWebAddress } from "./navigation/url-resolver.js";
+export { inspectUrl, normaliseWebUrl, sameOrigin, resolveRelativeUrl } from "./navigation/url-tools.js";
 export { NavigationController } from "./navigation/controller.js";
 export { TabManager } from "./tabs/tab-manager.js";
 export { JsonStore, BookmarkStore, HistoryStore } from "./storage/stores.js";
+export { CacheStore } from "./storage/cache-store.js";
 export { runDiagnostics } from "./diagnostics/index.js";
 export { DisposableStack, createAbortScope } from "./runtime/disposable.js";
 export { TabRuntime } from "./runtime/tab-runtime.js";
@@ -14,6 +16,11 @@ export { ExtensionRegistry } from "./extensions/extension-registry.js";
 export { CommandRegistry } from "./commands/command-registry.js";
 export { PerformanceMonitor } from "./telemetry/performance-monitor.js";
 export { ViewAdapter } from "./adapters/view-adapter.js";
+export { detectPlatform, requirePlatformFeatures } from "./platform/web-platform.js";
+export { WorkerManager } from "./platform/worker-manager.js";
+export { MessageRPC } from "./platform/message-rpc.js";
+export { DOMObserver } from "./dom/dom-observer.js";
+export { mimeFromExtension, extensionFromMime, isTextMime, normaliseMime } from "./utils/mime.js";
 
 export const ENGINE_NAME = "Polaris Engine";
-export const ENGINE_VERSION = "0.2.0";
+export const ENGINE_VERSION = "0.3.0";
