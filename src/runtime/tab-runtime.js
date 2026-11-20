@@ -13,7 +13,7 @@ export class TabRuntime {
     this.startedAt = null;
   }
   async start(context = {}) {
-    if (this.state !== "created" && this.state !== "stopped") throw new Error("Runtime cannot start from state: " + this.state);
+    if (this.state !== "created") throw new Error("A stopped runtime cannot be restarted; create a new runtime instead.");
     this.state = "starting";
     this.events.emit("runtime:starting", { tabId: this.tabId });
     try {
