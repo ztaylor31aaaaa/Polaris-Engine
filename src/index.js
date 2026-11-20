@@ -26,4 +26,4 @@ export { DOMObserver } from "./dom/dom-observer.js";
 export { mimeFromExtension, extensionFromMime, isTextMime, normaliseMime } from "./utils/mime.js";
 
 export const ENGINE_NAME = "Polaris Engine";
-export const ENGINE_VERSION = "0.3.0";
+export const ENGINE_VERSION = "0.4.0";
