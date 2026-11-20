@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { TransportProviderManager, inspectMigration, applyMigration, exportPortableData } from "../src/index.js";
+import { TransportProviderManager, SettingsManager, inspectMigration, applyMigration, exportPortableData } from "../src/index.js";
 
 test("transport provider requires explicit enable and selection", async () => {
   let initialised = 0;
@@ -59,4 +59,15 @@ test("migration reads Netscape bookmarks HTML exports", () => {
 test("migration reads Chrome-style bookmark trees", () => {
   const preview = inspectMigration({ roots: { bookmark_bar: { children: [{ name: "Docs", url: "https://example.com" }] } } });
   assert.equal(preview.counts.bookmarks, 1);
+});
+
+test("settings manager validates and persists transport preferences", () => {
+  const values = new Map();
+  const storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) };
+  const settings = new SettingsManager({ storage });
+  settings.setMany({ transportEnabled: true, transportProvider: "mock", transportConnectTimeout: 5000 });
+  assert.equal(settings.get("transportEnabled"), true);
+  assert.equal(settings.get("transportProvider"), "mock");
+  assert.equal(settings.get("transportConnectTimeout"), 5000);
+  assert.throws(() => settings.set("transportConnectTimeout", 10), /between 1000 and 120000/);
 });
