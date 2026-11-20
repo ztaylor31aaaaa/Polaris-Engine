@@ -41,7 +41,7 @@ Polaris Engine aims to become a modular browser-runtime and document compatibili
 - [ ] Stable public API documentation and semantic-versioning policy
 - [ ] Browser integration test matrix
 
-## 0.5 — Advanced browser compatibility
+## 0.5 — Transport configuration and portable migration (implemented foundation)\n- [x] Explicit transport-provider registration and selection API\n- [x] Transport enable/disable and optional startup initialisation settings\n- [x] Typed lifecycle state and error events\n- [x] Preview-first JSON migration for bookmarks, history, tabs and safe preferences\n- [x] Portable export format and migration documentation\n- [ ] Add a real permitted provider integration and provider conformance suite\n- [ ] Add browser-level end-to-end migration tests\n\n## 0.6 — Advanced browser compatibility
 - [ ] Document lifecycle model: navigation start, redirects when observable, commit, load, abort and failure
 - [ ] Structured diagnostics for frame restrictions, CSP, sandboxing, cookie/storage restrictions and browser policy failures
 - [ ] Standard request/response metadata interfaces where exposed by the host platform
@@ -51,7 +51,7 @@ Polaris Engine aims to become a modular browser-runtime and document compatibili
 - [ ] Compatibility profiles with explicit supported/unsupported API tables
 - [ ] Reference demo application and end-to-end tests
 
-## 0.6 — Pluggable transport integration
+## 0.7 — Pluggable transport integration
 - [ ] Stable transport-provider interface for applications that have an independently operated and authorised transport
 - [ ] Provider lifecycle: initialise, connect, request/navigation result, report failure, disconnect and dispose
 - [ ] Typed transport errors, cancellation, timeouts and diagnostic events
