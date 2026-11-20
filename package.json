@@ -1,6 +1,6 @@
 {
   "name": "@polaris/engine",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
   "type": "module",
   "description": "Modular browser-runtime framework for Polaris",
@@ -9,6 +9,7 @@
     "./navigation": "./src/navigation/controller.js",
     "./tabs": "./src/tabs/tab-manager.js",
     "./storage": "./src/storage/stores.js",
+    "./cache": "./src/storage/cache-store.js",
     "./diagnostics": "./src/diagnostics/index.js",
     "./runtime": "./src/runtime/runtime-manager.js",
     "./security": "./src/security/permissions.js",
@@ -16,13 +17,16 @@
     "./extensions": "./src/extensions/extension-registry.js",
     "./commands": "./src/commands/command-registry.js",
     "./telemetry": "./src/telemetry/performance-monitor.js",
-    "./adapters": "./src/adapters/view-adapter.js"
+    "./adapters": "./src/adapters/view-adapter.js",
+    "./platform": "./src/platform/web-platform.js",
+    "./workers": "./src/platform/worker-manager.js",
+    "./rpc": "./src/platform/message-rpc.js",
+    "./dom": "./src/dom/dom-observer.js",
+    "./mime": "./src/utils/mime.js"
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/index.js && node --check src/runtime/disposable.js && node --check src/runtime/tab-runtime.js && node --check src/runtime/runtime-manager.js && node --check src/security/permissions.js && node --check src/security/origin-policy.js && node --check src/settings/settings-manager.js && node --check src/extensions/extension-registry.js && node --check src/commands/command-registry.js && node --check src/telemetry/performance-monitor.js && node --check src/adapters/view-adapter.js && node --check src/navigation/controller.js && node --check src/tabs/tab-manager.js && node --check src/storage/stores.js"
+    "check": "node --check src/index.js && node --check src/runtime/disposable.js && node --check src/runtime/tab-runtime.js && node --check src/runtime/runtime-manager.js && node --check src/security/permissions.js && node --check src/security/origin-policy.js && node --check src/settings/settings-manager.js && node --check src/extensions/extension-registry.js && node --check src/commands/command-registry.js && node --check src/telemetry/performance-monitor.js && node --check src/adapters/view-adapter.js && node --check src/navigation/controller.js && node --check src/navigation/url-tools.js && node --check src/tabs/tab-manager.js && node --check src/storage/stores.js && node --check src/storage/cache-store.js && node --check src/platform/web-platform.js && node --check src/platform/worker-manager.js && node --check src/platform/message-rpc.js && node --check src/dom/dom-observer.js && node --check src/utils/mime.js"
   },
-  "engines": {
-    "node": ">=20"
-  }
+  "engines": { "node": ">=20" }
 }
