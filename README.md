@@ -1,37 +1,24 @@
 # Polaris Engine
 
-Polaris Engine is a modular browser-runtime framework for the Polaris ecosystem. Version 0.2 adds a per-tab runtime lifecycle, disposable resource scopes, permission and origin policies, settings, extension and command registries, performance metrics, and a pluggable document-view adapter.
+Polaris Engine is a modular browser-runtime framework for Polaris. Version 0.3 expands the foundation with platform feature detection, native worker management, MessagePort RPC, Cache Storage, DOM observation, URL inspection and MIME utilities.
 
-## Modules
+## Feature groups
 
-- **Navigation:** HTTP(S) URL resolution, history state, back/forward/reload events.
-- **Tabs and sessions:** create, activate, pin, group, close, reopen, serialise and restore tabs.
-- **Runtime lifecycle:** independent per-tab runtimes, start/suspend/resume/stop, abort signals, resource cleanup and runtime limits.
-- **View adapter:** mounts and unmounts HTTP(S) documents into a supplied container. This is a display adapter, not a network proxy.
-- **Security:** permission grants scoped by tab or globally; URL protocol, host and embedded-credential policy.
-- **Settings:** validated persistent settings with change/reset events.
-- **Extensions:** register, activate, deactivate and unregister extension modules with cleanup callbacks.
-- **Commands:** register and execute app commands with metadata and shortcuts.
-- **Storage:** JSON, bookmarks and bounded history stores.
-- **Telemetry:** bounded performance samples with min/max/average/p95 summaries.
-- **Diagnostics:** browser API capability checks.
+- **Navigation:** URL resolution and inspection, same-origin checks, history state and navigation events.
+- **Tabs and sessions:** tab lifecycle, pinning, groups, closed-tab recovery and session serialisation.
+- **Runtime:** per-tab runtime lifecycle, resource disposal, abort scopes and runtime limits.
+- **Document views:** HTTP(S) iframe mounting and cleanup through an adapter.
+- **Platform APIs:** browser feature detection, native Web Worker lifecycle and MessagePort-based RPC.
+- **DOM:** MutationObserver wrapper with subscription and disposal.
+- **Storage:** JSON settings, bookmarks, history and Cache Storage wrapper.
+- **Security:** scoped permission grants and URL origin policy.
+- **Extensibility:** extension lifecycle and application command registry.
+- **Utilities:** MIME lookup, URL metadata and performance metrics.
+- **Diagnostics:** structured browser capability checks.
 
-## Basic use
+## Runtime safety
 
-```js
-import { TabManager, RuntimeManager, SettingsManager, PermissionManager } from "@polaris/engine";
-
-const tabs = new TabManager();
-const tab = tabs.create({ title: "Start page" });
-const runtimes = new RuntimeManager();
-await runtimes.start(tab.id, { url: "https://example.com" });
-
-const permissions = new PermissionManager();
-permissions.grant(tab.id, "fullscreen");
-
-const settings = new SettingsManager();
-settings.set("theme", "dark");
-```
+The core package does not automatically register a service worker, load Scramjet bundles, initialise a proxy transport, rewrite requests or connect to proxy endpoints. Browser APIs are exposed as opt-in modules. This keeps importing or starting the framework separate from any proxy subsystem.
 
 ## Development
 
@@ -42,8 +29,8 @@ npm test
 npm run check
 ```
 
-## Important limitations
+## Limitations
 
-This is a browser-runtime framework, not a complete browser engine and not yet Scramjet feature parity. The view adapter relies on normal browser iframe rules and site framing policies. It does not rewrite website code, intercept or disguise network traffic, or bypass network controls. Transport, document transformation and service-worker components remain separate future milestones and must be used only where authorised.
+Polaris Engine is not a complete browser engine and does not yet have full Scramjet feature parity. Its view adapter uses normal browser iframe behaviour and is subject to browser security and framing policies. Platform APIs wrap native browser functionality rather than attempting to emulate every browser implementation detail.
 
 See [docs/ROADMAP.md](docs/ROADMAP.md).
