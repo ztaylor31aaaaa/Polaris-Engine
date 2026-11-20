@@ -1,7 +1,7 @@
 import { EventBus } from "../utils/events.js";
 
 export class FrameController {
-  constructor({ container, createFrame, sandbox = "allow-forms allow-scripts allow-same-origin" } = {}) {
+  constructor({ container, createFrame, sandbox = "allow-forms allow-scripts" } = {}) {
     this.container = container || null;
     this.createFrame = createFrame || (() => document.createElement("iframe"));
     this.sandbox = sandbox;
@@ -46,6 +46,8 @@ export class FrameController {
     const frame = this.get(id);
     if (!frame?.contentWindow) throw new Error("Frame is not ready.");
     if (!targetOrigin || targetOrigin === "*") throw new TypeError("An explicit target origin is required.");
+    const expectedOrigin = new URL(frame.src).origin;
+    if (targetOrigin !== expectedOrigin) throw new TypeError("Target origin must match the frame URL origin.");
     frame.contentWindow.postMessage(message, targetOrigin);
   }
   close(id) {
