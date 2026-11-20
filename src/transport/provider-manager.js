@@ -72,10 +72,10 @@ export class TransportProviderManager {
     let timer;
     const timeout = new Promise((_, reject) => {
       timer = setTimeout(() => {
-        controller.abort();
         const error = new Error("Transport connection timed out.");
         error.code = "PROVIDER_TIMEOUT";
         reject(error);
+        controller.abort();
       }, this.connectTimeout);
     });
     try {
