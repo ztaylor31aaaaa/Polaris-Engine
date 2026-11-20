@@ -5,10 +5,12 @@ export function resolveAddress(input, options = {}) {
   if (!value) throw new TypeError("Enter a website address or search term.");
 
   const searchUrl = options.searchUrl || "https://www.google.com/search?q=%s";
-  const looksLikeHost = /^(localhost|\[[0-9a-f:]+\]|[^\s/]+\.[a-z]{2,})(:\d+)?([/?#].*)?$/i.test(value);
-  const candidate = /^[a-z][a-z\d+.-]*:\/\//i.test(value)
-    ? value
-    : looksLikeHost ? "https://" + value : null;
+  const hasScheme = /^[a-z][a-z\\d+.-]*:/i.test(value);
+  const hasWebScheme = /^https?:\\/\\//i.test(value);
+  if (hasScheme && !hasWebScheme) throw new TypeError("Only HTTP and HTTPS addresses are supported.");
+
+  const looksLikeHost = /^(localhost|\\[[0-9a-f:]+\\]|[^\\s/]+\\.[a-z]{2,})(:\\d+)?([/?#].*)?$/i.test(value);
+  const candidate = hasWebScheme ? value : looksLikeHost ? "https://" + value : null;
 
   if (!candidate) {
     if (!searchUrl.includes("%s")) throw new TypeError("Search URL must contain %s.");
@@ -16,9 +18,7 @@ export function resolveAddress(input, options = {}) {
   }
 
   const url = new URL(candidate);
-  if (!HTTP_PROTOCOLS.has(url.protocol)) {
-    throw new TypeError("Only HTTP and HTTPS addresses are supported.");
-  }
+  if (!HTTP_PROTOCOLS.has(url.protocol)) throw new TypeError("Only HTTP and HTTPS addresses are supported.");
   if (!url.hostname) throw new TypeError("The address does not contain a hostname.");
   return url.href;
 }
