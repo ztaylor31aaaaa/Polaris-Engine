@@ -5,6 +5,7 @@ export class UrlWatcher {
     this.lastUrl = this.#read();
     this.active = false;
     this._check = () => this.check();
+    this._historyRestorers = [];
   }
   #read() { try { return this.target?.location?.href || ""; } catch { return ""; } }
   check() {
@@ -15,12 +16,29 @@ export class UrlWatcher {
     for (const listener of [...this.listeners]) listener({ url: next, previous });
     return true;
   }
+  #wrapHistory(method) {
+    const history = this.target?.history;
+    const original = history?.[method];
+    if (typeof original !== "function") return;
+    const watcher = this;
+    function wrapped(...args) {
+      const result = original.apply(this, args);
+      queueMicrotask(() => watcher.check());
+      return result;
+    }
+    history[method] = wrapped;
+    this._historyRestorers.push(() => {
+      if (history[method] === wrapped) history[method] = original;
+    });
+  }
   start() {
     if (this.active || !this.target?.addEventListener) return this;
     this.active = true;
     this.target.addEventListener("popstate", this._check);
     this.target.addEventListener("hashchange", this._check);
     this.target.addEventListener("pageshow", this._check);
+    this.#wrapHistory("pushState");
+    this.#wrapHistory("replaceState");
     return this;
   }
   subscribe(listener) {
@@ -34,6 +52,7 @@ export class UrlWatcher {
       this.target.removeEventListener("hashchange", this._check);
       this.target.removeEventListener("pageshow", this._check);
     }
+    for (const restore of this._historyRestorers.splice(0)) restore();
     this.active = false;
     this.listeners.clear();
   }
