@@ -33,6 +33,20 @@ function flattenBookmarksTree(nodes, output = []) {
   }
   return output;
 }
+function decodeHtml(value) {
+  const entities = { "&amp;": "&", "&quot;": "\"", "&#39;": "'", "&apos;": "'", "&lt;": "<", "&gt;": ">" };
+  return String(value).replace(/&(amp|quot|#39|apos|lt|gt);/gi, entity => entities[entity.toLowerCase()] || entity);
+}
+function parseBookmarkHtml(input) {
+  const rows = [];
+  const pattern = /<a\b[^>]*?href\s*=\s*(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a>/gi;
+  for (const match of String(input).matchAll(pattern)) {
+    const url = decodeHtml(match[2]);
+    const title = decodeHtml(match[3].replace(/<[^>]*>/g, "").trim());
+    if (safeUrl(url)) rows.push({ url, title: title || url, folder: "Imported" });
+  }
+  return rows;
+}
 function safePreferences(input) {
   if (!input || typeof input !== "object") return {};
   return Object.fromEntries(Object.entries(input).filter(([key, value]) => PREFERENCE_KEYS.has(key) && ["string", "boolean", "number"].includes(typeof value)));
@@ -42,7 +56,8 @@ function safePreferences(input) {
 export function inspectMigration(input, { source = "auto" } = {}) {
   let data = input;
   if (typeof input === "string") {
-    try { data = JSON.parse(input); } catch { throw new TypeError("Import must be valid JSON. Export bookmarks as JSON first."); }
+    if (/^\s*</.test(input)) data = { bookmarks: parseBookmarkHtml(input), format: "netscape-bookmarks-html" };
+    else { try { data = JSON.parse(input); } catch { throw new TypeError("Import must be JSON or Netscape bookmark HTML."); } }
   }
   if (!data || typeof data !== "object") throw new TypeError("Unsupported import file.");
   const root = data.roots ? flattenBookmarksTree(Object.values(data.roots)) : [];
