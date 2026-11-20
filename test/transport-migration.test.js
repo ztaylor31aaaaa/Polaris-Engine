@@ -48,3 +48,15 @@ test("migration excludes credential-like settings and merges tabs", () => {
   assert.equal(result.settings.accessToken, undefined);
   assert.equal(result.tabs.length, 2);
 });
+
+test("migration reads Netscape bookmarks HTML exports", () => {
+  const preview = inspectMigration('<!DOCTYPE NETSCAPE-Bookmark-file-1><DL><DT><A HREF="https://example.com/?a=1&amp;b=2">Example &amp; Docs</A></DL>');
+  assert.equal(preview.counts.bookmarks, 1);
+  assert.equal(preview.data.bookmarks[0].url, "https://example.com/?a=1&b=2");
+  assert.equal(preview.data.bookmarks[0].title, "Example & Docs");
+});
+
+test("migration reads Chrome-style bookmark trees", () => {
+  const preview = inspectMigration({ roots: { bookmark_bar: { children: [{ name: "Docs", url: "https://example.com" }] } } });
+  assert.equal(preview.counts.bookmarks, 1);
+});
