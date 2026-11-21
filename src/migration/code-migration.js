@@ -121,6 +121,111 @@ export function createMigrationPlan(analysis) {
   };
 }
 
+
+/** Builds a detailed, reviewable migration report from a static scan. */
+export function createMigrationReport(analysis) {
+  if (!analysis || analysis.schema !== 1 || !Array.isArray(analysis.findings)) {
+    throw new TypeError("A valid analysis result is required.");
+  }
+  const groups = new Map();
+  for (const finding of analysis.findings) {
+    const key = finding.id;
+    if (!groups.has(key)) {
+      groups.set(key, {
+        id: key,
+        engine: finding.engine,
+        severity: finding.severity,
+        message: finding.message,
+        suggestion: finding.suggestion,
+        migration: finding.migration,
+        occurrences: 0,
+        locations: []
+      });
+    }
+    const group = groups.get(key);
+    group.occurrences += finding.occurrences;
+    group.locations.push({
+      path: finding.path,
+      lines: [...finding.lines],
+      occurrences: finding.occurrences
+    });
+  }
+  const findings = [...groups.values()].map(group => ({
+    ...group,
+    locations: group.locations.sort((a, b) => a.path.localeCompare(b.path))
+  }));
+  const steps = findings.map((finding, index) => ({
+    order: index + 1,
+    id: finding.id,
+    title: finding.migration?.legacy || finding.message,
+    priority: finding.severity === "manual" ? "careful-review" : finding.severity === "convertible" ? "port" : "review",
+    confidence: finding.migration?.confidence || "manual",
+    affectedFiles: finding.locations.map(location => location.path),
+    lineReferences: finding.locations.flatMap(location => location.lines.map(line => ({ path: location.path, line }))),
+    recommendedApis: finding.migration?.polaris || [],
+    importPath: finding.migration?.importPath || null,
+    starterExample: finding.migration?.example || null,
+    action: finding.migration?.notes || finding.suggestion,
+    verification: "Port this responsibility, then add or update a test that checks its behaviour in the target browser."
+  }));
+  return {
+    schema: 1,
+    generatedBy: "Polaris Engine code migration toolkit",
+    overview: {
+      filesScanned: analysis.filesScanned,
+      filesWithFindings: analysis.filesWithFindings,
+      findingGroups: findings.length,
+      totalOccurrences: findings.reduce((sum, item) => sum + item.occurrences, 0),
+      detectedEngines: [...analysis.detectedEngines],
+      summary: { ...analysis.summary }
+    },
+    findings,
+    steps
+  };
+}
+
+/** Renders a detailed report as Markdown for a human-reviewed migration task. */
+export function renderMigrationReport(report) {
+  if (!report || report.schema !== 1 || !Array.isArray(report.steps) || !report.overview) {
+    throw new TypeError("A valid migration report is required.");
+  }
+  const lines = [
+    "# Polaris Engine migration report",
+    "",
+    "## Overview",
+    "",
+    "- Files scanned: " + report.overview.filesScanned,
+    "- Files with findings: " + report.overview.filesWithFindings,
+    "- Finding groups: " + report.overview.findingGroups,
+    "- Total occurrences: " + report.overview.totalOccurrences,
+    "- Detected components: " + (report.overview.detectedEngines.join(", ") || "None"),
+    "",
+    "## Recommended migration steps",
+    ""
+  ];
+  if (!report.steps.length) lines.push("No legacy patterns were detected. Review application requirements and run the normal test suite.");
+  for (const step of report.steps) {
+    lines.push("### " + step.order + ". " + step.title, "");
+    lines.push("- Priority: " + step.priority, "- Confidence: " + step.confidence);
+    if (step.recommendedApis.length) lines.push("- Polaris APIs: " + step.recommendedApis.map(name => "`" + name + "`").join(", "));
+    if (step.importPath) lines.push("- Package: `" + step.importPath + "`");
+    lines.push("- Action: " + step.action);
+    lines.push("- Verify: " + step.verification);
+    if (step.affectedFiles.length) {
+      lines.push("- Locations:");
+      for (const location of report.findings.find(item => item.id === step.id)?.locations || []) {
+        lines.push("  - `" + location.path + "`: line(s) " + location.lines.join(", ") + " (" + location.occurrences + " occurrence(s))");
+      }
+    }
+    if (step.starterExample) {
+      lines.push("", "Starter example (adapt and test before use):", "", "```js", step.starterExample, "```");
+    }
+    lines.push("");
+  }
+  lines.push("## Safety and compatibility notes", "", "This report is based on static pattern matching, not runtime execution. Recommendations are starting points, not proof of API equivalence. Proxy URL rewriting, proxy transport and legacy proxy workers require a separate, authorised architecture review; this report does not provide network-filter bypass or traffic-concealment code.", "");
+  return lines.join("\n");
+}
+
 const MIGRATION_MAPPINGS = Object.freeze([
   { id: "scramjet-controller", legacy: "ScramjetController / Ultraviolet runtime startup", confidence: "medium", polaris: ["createLegacyMigrationFacade", "RuntimeManager", "TabRuntime", "TabManager"], importPath: "@polaris/engine", notes: "The lifecycle facade can replace common init/open/navigate/close patterns, but proxy-specific behaviour must be ported separately.", example: 'const controller = createLegacyMigrationFacade({ tabs, views, runtimes });' },
   { id: "legacy-url-codec", legacy: "Scramjet or Ultraviolet URL encoding and rewriting", confidence: "manual", polaris: ["NavigationController", "UrlWatcher", "resolveAddress", "inspectUrl"], importPath: "@polaris/engine", notes: "Native URL tools handle ordinary HTTP(S) addresses only. Rewritten proxy URLs are not equivalent and must be redesigned." },
