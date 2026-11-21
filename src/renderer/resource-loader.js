@@ -38,16 +38,31 @@ export class ResourceLoader {
       clearTimeout(timeout); external?.removeEventListener("abort",abort);
     }
   }
-  async fetchText(reference,options={}) {
-    const {response,url}=await this.fetchResponse(reference,options);
-    const text=await response.text();
-    if(new TextEncoder().encode(text).byteLength>this.maxBytes) throw new ResourceLoadError("Resource exceeds configured size limit","TOO_LARGE",url);
-    return {text,url,contentType:response.headers?.get?.("content-type") ?? "text/plain"};
-  }
-  async fetchBytes(reference,options={}) {
-    const {response,url}=await this.fetchResponse(reference,options);
+  async _readBytes(response,url){
+    if(response.body?.getReader){
+      const reader=response.body.getReader(),chunks=[];let total=0;
+      try{
+        while(true){
+          const {done,value}=await reader.read();if(done)break;
+          total+=value.byteLength;
+          if(total>this.maxBytes){await reader.cancel();throw new ResourceLoadError("Resource exceeds configured size limit","TOO_LARGE",url);}
+          chunks.push(value);
+        }
+      }catch(error){if(error instanceof ResourceLoadError)throw error;throw new ResourceLoadError("Unable to read resource body","READ_ERROR",url,error);}
+      const bytes=new Uint8Array(total);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}return bytes;
+    }
     const bytes=new Uint8Array(await response.arrayBuffer());
-    if(bytes.byteLength>this.maxBytes) throw new ResourceLoadError("Resource exceeds configured size limit","TOO_LARGE",url);
-    return {bytes,url,contentType:response.headers?.get?.("content-type") ?? "application/octet-stream"};
+    if(bytes.byteLength>this.maxBytes)throw new ResourceLoadError("Resource exceeds configured size limit","TOO_LARGE",url);
+    return bytes;
+  }
+  async fetchText(reference,options={}){
+    const {response,url}=await this.fetchResponse(reference,options);
+    const bytes=await this._readBytes(response,url);
+    return {text:new TextDecoder(options.encoding??"utf-8").decode(bytes),url,contentType:response.headers?.get?.("content-type")??"text/plain"};
+  }
+  async fetchBytes(reference,options={}){
+    const {response,url}=await this.fetchResponse(reference,options);
+    const bytes=await this._readBytes(response,url);
+    return {bytes,url,contentType:response.headers?.get?.("content-type")??"application/octet-stream"};
   }
 }
