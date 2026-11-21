@@ -105,3 +105,32 @@ test("scanner detects side-effect imports and legacy URL helper calls", () => {
   assert.ok(result.findings.some(item => item.id === "legacy-side-effect-import"));
   assert.ok(result.findings.some(item => item.id === "legacy-url-codec"));
 });
+
+test("scanner attaches confidence-ranked storage migration recommendations", () => {
+  const result = analyzeLegacyProject({
+    "src/storage.js": 'localStorage.setItem("theme", "dark"); sessionStorage.getItem("tab"); indexedDB.open("app");'
+  });
+  const byId = Object.fromEntries(result.findings.map(item => [item.id, item]));
+  assert.equal(byId["local-storage"].migration.confidence, "medium");
+  assert.deepEqual(byId["local-storage"].migration.polaris, ["WebStorageAdapter"]);
+  assert.ok(byId["session-storage"].migration.polaris.includes("SessionPersistence"));
+  assert.ok(byId["indexeddb-access"].migration.polaris.includes("IndexedDBStore"));
+});
+
+test("proxy transport and URL rewriting findings stay manual-review mappings", () => {
+  const result = analyzeLegacyProject({
+    "src/runtime.js": 'new BareMux(); const u = __uv$encodeUrl(input);'
+  });
+  const transport = result.findings.find(item => item.id === "bare-mux");
+  const url = result.findings.find(item => item.id === "legacy-url-codec");
+  assert.equal(transport.migration.confidence, "manual");
+  assert.equal(url.migration.confidence, "manual");
+  assert.match(transport.migration.notes, /authorised/);
+});
+
+test("migration mappings can be filtered by confidence", () => {
+  const medium = getMigrationMappings({ confidence: "medium" });
+  assert.ok(medium.length > 0);
+  assert.ok(medium.every(item => item.confidence === "medium"));
+  assert.ok(getMigrationMappings({ engine: "ultraviolet", confidence: "manual" }).length > 0);
+});
