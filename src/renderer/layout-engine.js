@@ -16,7 +16,7 @@ export class LayoutEngine {
     const width=Math.max(1,viewport.width??1024),height=Math.max(1,viewport.height??768),root=document.documentElement;
     if(!root)return {width,height,contentHeight:0,boxes:[]};
     const boxes=[],measure=(text,style)=>this.measureText(text,px(style.fontSize,16),style.fontFamily);
-    const layoutNode=(node,x,y,availableWidth,availableHeight=height)=>{
+    const layoutNode=(node,x,y,availableWidth,availableHeight=height,collect=true)=>{
       if(node instanceof TextNode)return {width:0,height:0};
       if(!(node instanceof ElementNode))return {width:0,height:0};
       const s=node.computedStyle??{},display=s.display??"inline";
@@ -46,7 +46,7 @@ export class LayoutEngine {
         if(!(child instanceof ElementNode))continue;
         const childDisplay=child.computedStyle?.display??"inline";
         if(isFlex){
-          const childBox=layoutNode(child,0,0,column?contentWidth:contentWidth,availableHeight);
+          const childBox=layoutNode(child,0,0,contentWidth,availableHeight,false);
           flexItems.push({node:child,width:childBox.width,height:childBox.height});
         }else if(childDisplay==="inline"||childDisplay==="inline-block"){
           const childBox=layoutNode(child,cursorX,cursorY,Math.max(0,contentX+contentWidth-cursorX),availableHeight);
@@ -68,8 +68,8 @@ export class LayoutEngine {
         else if(s.justifyContent==="space-around"&&flexItems.length){between=gap+free/flexItems.length;offset=free/(2*flexItems.length);}
         for(const item of flexItems){
           if(item.node instanceof TextNode){if(column){cursorY=contentY+offset;offset+=item.height+between;}else{cursorX=contentX+offset;offset+=item.width+between;}continue;}
-          if(column){const childX=s.alignItems==="center"?contentX+(contentWidth-item.width)/2:s.alignItems==="flex-end"?contentX+contentWidth-item.width:contentX;const box=layoutNode(item.node,childX,contentY+offset,contentWidth,availableHeight);offset+=box.height+between;}
-          else{const childY=s.alignItems==="center"?contentY+(line-item.height)/2:s.alignItems==="flex-end"?contentY+line-item.height:contentY;const box=layoutNode(item.node,contentX+offset,childY,item.width,availableHeight);offset+=box.width+between;usedHeight=Math.max(usedHeight,box.height);}
+          if(column){const childX=s.alignItems==="center"?contentX+(contentWidth-item.width)/2:s.alignItems==="flex-end"?contentX+contentWidth-item.width:contentX;const box=layoutNode(item.node,childX,contentY+offset,contentWidth,availableHeight,true);offset+=box.height+between;}
+          else{const childY=s.alignItems==="center"?contentY+(line-item.height)/2:s.alignItems==="flex-end"?contentY+line-item.height:contentY;const box=layoutNode(item.node,contentX+offset,childY,item.width,availableHeight,true);offset+=box.width+between;usedHeight=Math.max(usedHeight,box.height);}
         }
         if(column)usedHeight=Math.max(0,offset-between);else usedHeight=Math.max(usedHeight,...flexItems.map(i=>i.height));
       }else if(cursorX>contentX||lineHeight){cursorY+=lineHeight;usedHeight+=lineHeight;}
@@ -82,7 +82,7 @@ export class LayoutEngine {
       let finalX=x+margin.left,finalY=y+margin.top;
       if(s.position==="relative"){finalX+=px(s.left);finalY+=px(s.top);}
       node.layout={x:finalX,y:finalY,width:totalWidth,height:totalHeight,contentX:finalX+border.left+padding.left,contentY:finalY+border.top+padding.top,contentWidth,contentHeight,margin,padding,border};
-      boxes.push(node);
+      if(collect)boxes.push(node);
       return {width:totalWidth+margin.left+margin.right,height:totalHeight+margin.top+margin.bottom};
     };
     layoutNode(root,0,0,width,height);
