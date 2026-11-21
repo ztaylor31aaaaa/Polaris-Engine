@@ -160,7 +160,7 @@ test("Markdown migration report includes locations, code examples and review war
   });
   const markdown = renderMigrationReport(createMigrationReport(analysis));
   assert.match(markdown, /Polaris Engine migration report/);
-  assert.match(markdown, /src\\/proxy\\.js/);
+  assert.ok(markdown.includes("src/proxy.js"));
   assert.match(markdown, /WebStorageAdapter/);
   assert.match(markdown, /network-filter bypass/);
 });
