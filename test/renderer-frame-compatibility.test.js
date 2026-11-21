@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { PolarisFrameCompatibility } from "../src/renderer/frame-compatibility.js";
 
 function canvas(){
- const context={save(){},restore(){},clearRect(){},fillRect(){},strokeRect(){},fillText(){},measureText(t){return {width:String(t).length*7}},beginPath(){},rect(){},clip(){},drawImage(){}};
- return {width:640,height:480,getContext(){return context},addEventListener(){},removeEventListener(){},getBoundingClientRect(){return {left:0,top:0,width:640,height:480}}};
+ const context={canvas:null,save(){},restore(){},clearRect(){},fillRect(){},strokeRect(){},fillText(){},measureText(t){return {width:String(t).length*7}},beginPath(){},rect(){},clip(){},translate(){},drawImage(){},roundRect(){}};
+ const canvas={width:640,height:480,getContext(){return context},addEventListener(){},removeEventListener(){},getBoundingClientRect(){return {left:0,top:0,width:640,height:480}}};context.canvas=canvas;return canvas;
 }
 test("frame compatibility facade exposes frame-shaped document and window APIs",()=>{
  const frame=new PolarisFrameCompatibility({canvas:canvas()});
