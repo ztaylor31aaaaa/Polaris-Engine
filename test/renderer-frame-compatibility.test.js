@@ -48,6 +48,7 @@ test("frame exposes location components and history traversal state",()=>{
  assert.deepEqual(frame.history.state,{step:1});
  frame.history.pushState({step:2},"","/two");
  assert.equal(frame.history.state.step,2);
+ frame.renderer.history.onChange=()=>{};
  frame.history.back();
  assert.equal(frame.location.pathname,"/one");assert.equal(frame.history.state.step,1);
  frame.history.forward();
