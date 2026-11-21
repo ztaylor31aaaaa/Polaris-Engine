@@ -68,3 +68,5 @@ export { ScriptRuntime } from "./renderer/script-runtime.js";
 export { WorkerEngineAdapter } from "./renderer/worker-engine-adapter.js";
 
 export { installPolarisScriptWorker } from "./renderer/script-worker-host.js";
+
+export { PolarisDOMBridge } from "./renderer/script-bridge-extended.js";
