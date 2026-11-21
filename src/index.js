@@ -39,3 +39,11 @@ export const ENGINE_VERSION = "0.6.1";
 export { analyzeLegacyProject, convertLegacyProject, createMigrationPlan, createMigrationReport, renderMigrationReport, getMigrationMappings } from "./migration/code-migration.js";
 
 export { createLegacyMigrationFacade } from "./migration/legacy-facade.js";
+
+export { PolarisNode, DocumentNode, ElementNode, TextNode, CommentNode, matchesSelector } from "./renderer/document-model.js";
+export { HTMLParser, parseHTML } from "./renderer/html-parser.js";
+export { parseCSS, parseDeclarations, selectorSpecificity } from "./renderer/css-parser.js";
+export { StyleEngine } from "./renderer/style-engine.js";
+export { LayoutEngine } from "./renderer/layout-engine.js";
+export { PaintEngine } from "./renderer/paint-engine.js";
+export { PolarisRenderer } from "./renderer/renderer.js";
