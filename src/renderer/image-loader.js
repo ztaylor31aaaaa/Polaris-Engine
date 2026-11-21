@@ -9,11 +9,20 @@ export class ImageResourceLoader {
   }
   async _load(url,options){
     if(typeof this.decode!=="function")throw new Error("Image decoding is unavailable in this host");
-    const {bytes,contentType}=await this.resources.fetchBytes(url,{signal:options.signal,credentials:options.credentials});
-    if(!/^image\/(png|jpeg|gif|webp|avif|bmp|svg\+xml)/i.test(contentType))throw new Error("Unsupported image MIME type: "+contentType);
-    const blob=new Blob([bytes],{type:contentType});
-    const bitmap=await this.decode(blob);
-    return {url,bitmap,width:bitmap.width,height:bitmap.height,contentType};
+    try{
+      const {bytes,contentType}=await this.resources.fetchBytes(url,{signal:options.signal,credentials:options.credentials});
+      if(!/^image\/(png|jpeg|gif|webp|avif|bmp|svg\+xml)/i.test(contentType))throw new Error("Unsupported image MIME type: "+contentType);
+      const blob=new Blob([bytes],{type:contentType});
+      const bitmap=await this.decode(blob);
+      return {url,bitmap,width:bitmap.width,height:bitmap.height,contentType,originClean:true};
+    }catch(fetchError){
+      // Native image loading can display cross-origin pixels; canvas readback remains protected.
+      if(typeof globalThis.Image!=="function")throw fetchError;
+      const image=new Image();image.decoding="async";image.src=url;
+      try{if(typeof image.decode==="function")await image.decode();else await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error("Image request failed"));});}
+      catch{throw fetchError;}
+      return {url,bitmap:image,width:image.naturalWidth||image.width,height:image.naturalHeight||image.height,contentType:"image/native",originClean:false};
+    }
   }
   clear(){for(const item of this.cache.values())item.then(result=>result.bitmap?.close?.()).catch(()=>{});this.cache.clear();}
 }
