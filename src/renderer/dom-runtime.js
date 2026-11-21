@@ -67,6 +67,11 @@ export class PolarisDocumentRuntime extends EventTargetMixin {
     Object.defineProperty(el,"src",{get(){return this.getAttribute("src")??"";},set(v){this.setAttribute("src",v);}});
     Object.defineProperty(el,"name",{get(){return this.getAttribute("name")??"";},set(v){this.setAttribute("name",v);}});
     Object.defineProperty(el,"type",{get(){return this.getAttribute("type")??"";},set(v){this.setAttribute("type",v);}});
+    for(const name of ["title","placeholder","alt","tabIndex"]){
+      const attribute=name==="tabIndex"?"tabindex":name;
+      Object.defineProperty(el,name,{configurable:true,get(){const value=this.getAttribute(attribute);return name==="tabIndex"?(value==null?-1:Number(value)):value??"";},set(value){this.setAttribute(attribute,value);}});
+    }
+    Object.defineProperty(el,"innerText",{configurable:true,get(){return this.textContent;},set(value){this.textContent=String(value??"");}});
     Object.defineProperty(el,"dataset",{get(){const out={};for(const [key,value] of this.attributes)if(key.startsWith("data-"))out[key.slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]=value;return out;}});
     el.getBoundingClientRect=()=>{const b=el.layout??{};return {x:b.x??0,y:b.y??0,left:b.x??0,top:b.y??0,width:b.width??0,height:b.height??0,right:(b.x??0)+(b.width??0),bottom:(b.y??0)+(b.height??0),toJSON(){return {...this};}};};
     return el;
