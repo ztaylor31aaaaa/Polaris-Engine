@@ -65,3 +65,14 @@ test("CSS parser preserves media rules and evaluates them at compute time",()=>{
  engine.setViewport({width:500,height:700});engine.compute(doc);assert.equal(doc.querySelector(".panel").computedStyle.display,"none");
  engine.setViewport({width:900,height:700});engine.compute(doc);assert.equal(doc.querySelector(".panel").computedStyle.display,"block");
 });
+
+test("HTML fragment wrappers place content in the body and styles in the head",()=>{
+ const doc=parseHTML('<style>p{color:red}</style><main><p>Hello</p></main>');
+ assert.equal(doc.head.querySelector("style")!==null,true);
+ assert.equal(doc.body.querySelector("main")!==null,true);
+});
+test("selector engine supports :not and general sibling combinators",()=>{
+ const doc=parseHTML('<div><p class="skip">A</p><p>B</p><p class="active">C</p></div>');
+ assert.equal(doc.querySelectorAll("p:not(.skip)").length,2);
+ assert.equal(doc.querySelectorAll(".skip ~ .active").length,1);
+});
