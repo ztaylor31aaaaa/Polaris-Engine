@@ -94,4 +94,5 @@ export class PolarisMutationObserver {
   takeRecords(){const records=this.records;this.records=[];return records;}
   disconnect(){for(const fn of this.disconnectors)fn();this.disconnectors=[];this.records=[];}
 }
-\nfunction serializeRuntimeNode(node){if(node.nodeType===3)return node.data.replace(/&/g,"&amp;").replace(/</g,"&lt;");if(node.nodeType===8)return "<!--"+node.data+"-->";if(node instanceof ElementNode){const attrs=[...node.attributes].map(([k,v])=>" "+k+"=\\""+String(v).replace(/&/g,"&amp;").replace(/\\"/g,"&quot;")+"\\"").join("");return "<"+node.tagName+attrs+">"+node.childNodes.map(serializeRuntimeNode).join("")+(["area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"].includes(node.tagName)?"":"</"+node.tagName+">");}return "";}\n
+
+function serializeRuntimeNode(node){if(node.nodeType===3)return node.data.replace(/&/g,"&amp;").replace(/</g,"&lt;");if(node.nodeType===8)return "<!--"+node.data+"-->";if(node instanceof ElementNode){const attrs=[...node.attributes].map(([k,v])=>" "+k+"=\\""+String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;")+"\\"").join("");return "<"+node.tagName+attrs+">"+node.childNodes.map(serializeRuntimeNode).join("")+(["area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"].includes(node.tagName)?"":"</"+node.tagName+">");}return "";}
