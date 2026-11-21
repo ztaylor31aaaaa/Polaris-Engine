@@ -14,7 +14,16 @@ const CATALOG = Object.freeze([
   ["MutationObserver", "dom", ["MutationObserver"]], ["IntersectionObserver", "dom", ["IntersectionObserver"]], ["ResizeObserver", "dom", ["ResizeObserver"]],
   ["PerformanceObserver", "performance", ["PerformanceObserver"]], ["Performance", "performance", ["performance"]],
   ["DOMParser", "dom", ["DOMParser"]], ["Blob", "files", ["Blob"]], ["File", "files", ["File"]], ["FormData", "files", ["FormData"]],
-  ["WebAssembly", "compute", ["WebAssembly"]], ["OffscreenCanvas", "graphics", ["OffscreenCanvas"]]
+  ["WebAssembly", "compute", ["WebAssembly"]], ["OffscreenCanvas", "graphics", ["OffscreenCanvas"]],
+  ["WebTransport", "network", ["WebTransport"]], ["RTCPeerConnection", "network", ["RTCPeerConnection"]],
+  ["AbortController", "platform", ["AbortController"]], ["AbortSignal", "platform", ["AbortSignal"]],
+  ["DOMException", "platform", ["DOMException"]], ["structuredClone", "platform", ["structuredClone"]],
+  ["queueMicrotask", "platform", ["queueMicrotask"]], ["requestAnimationFrame", "graphics", ["requestAnimationFrame"]],
+  ["requestIdleCallback", "performance", ["requestIdleCallback"]], ["scheduler", "performance", ["scheduler"]],
+  ["customElements", "dom", ["customElements"]], ["ShadowRoot", "dom", ["ShadowRoot"]], ["CSS", "dom", ["CSS"]],
+  ["AudioContext", "media", ["AudioContext"]], ["MediaRecorder", "media", ["MediaRecorder"]],
+  ["MediaDevices", "media", ["navigator", "mediaDevices"]], ["WebGPU", "graphics", ["navigator", "gpu"]],
+  ["FileSystemAccess", "files", ["showOpenFilePicker"]], ["Navigation", "navigation", ["navigation"]]
 ]);
 function readPath(root, path) {
   try { let value = root; for (const key of path) { if (value == null) return undefined; value = value[key]; } return value; }
