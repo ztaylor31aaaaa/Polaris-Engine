@@ -1,107 +1,107 @@
 import { ElementNode, TextNode } from "./document-model.js";
 import { px } from "./style-engine.js";
-const BLOCK = new Set(["block","flex","list-item","table","grid"]);
+
 function length(value, available, fallback=null) {
-  if(value==="auto"||value==null)return fallback;
-  if(String(value).endsWith("%"))return available*(Number.parseFloat(value)||0)/100;
-  if(String(value).endsWith("em"))return px(value)*16;
-  if(String(value).endsWith("rem"))return px(value)*16;
-  return px(value,fallback);
+  if(value==null||value==="auto"||value==="none")return fallback;
+  const text=String(value).trim();
+  if(text.endsWith("%"))return available*(Number.parseFloat(text)||0)/100;
+  if(text.endsWith("vw"))return available*(Number.parseFloat(text)||0)/100;
+  return px(text,fallback);
 }
 function sides(style,prefix){return {top:px(style[prefix+"Top"]),right:px(style[prefix+"Right"]),bottom:px(style[prefix+"Bottom"]),left:px(style[prefix+"Left"])};}
 function clamp(value,min,max){return Math.max(min??0,max==null?value:Math.min(value,max));}
+const BLOCK=new Set(["block","flex","grid","list-item","table"]);
 export class LayoutEngine {
   constructor(options={}){this.defaultLineHeight=options.lineHeight??19;this.measureText=options.measureText??(text=>String(text).length*8);}
-  layout(document,viewport={}){
+  layout(document,viewport={}) {
     const width=Math.max(1,viewport.width??1024),height=Math.max(1,viewport.height??768),root=document.documentElement;
-    if(!root)return {width,height,contentHeight:0,boxes:[]};
-    const boxes=[],measure=(text,style)=>this.measureText(text,px(style.fontSize,16),style.fontFamily);
-    const layoutNode=(node,x,y,availableWidth,availableHeight=height,collect=true)=>{
-      if(node instanceof TextNode)return {width:0,height:0};
+    const boxes=[],textRuns=[];
+    if(!root)return {width,height,contentHeight:0,boxes,textRuns};
+    const measure=(text,style)=>this.measureText(text,px(style.fontSize,16),style.fontFamily);
+    const layoutNode=(node,x,y,availableWidth,availableHeight=height,forcedWidth=null)=>{
       if(!(node instanceof ElementNode))return {width:0,height:0};
       const s=node.computedStyle??{},display=s.display??"inline";
-      if(display==="none"){node.layout={x,y,width:0,height:0};return {width:0,height:0};}
+      if(display==="none"||s.visibility==="hidden"){node.layout={x,y,width:0,height:0};return {width:0,height:0};}
       const margin=sides(s,"margin"),padding=sides(s,"padding"),border={top:px(s.borderTopWidth),right:px(s.borderRightWidth),bottom:px(s.borderBottomWidth),left:px(s.borderLeftWidth)};
-      const boxSizing=s.boxSizing??"content-box";
       const horizontal=padding.left+padding.right+border.left+border.right,vertical=padding.top+padding.bottom+border.top+border.bottom;
-      let contentWidth=length(s.width,availableWidth,null);
+      let contentWidth=forcedWidth??length(s.width,availableWidth,null);
       if(node.tagName==="img"&&contentWidth==null)contentWidth=Number(node.getAttribute("width"))||node._intrinsicWidth||300;
-      if(contentWidth!=null&&boxSizing==="border-box")contentWidth=Math.max(0,contentWidth-horizontal);
+      if(contentWidth!=null&&s.boxSizing==="border-box")contentWidth=Math.max(0,contentWidth-horizontal);
       contentWidth=clamp(contentWidth??Math.max(0,availableWidth-margin.left-margin.right-horizontal),length(s.minWidth,availableWidth,0),length(s.maxWidth,availableWidth,null));
-      const contentX=x+margin.left+border.left+padding.left,contentY=y+margin.top+border.top+padding.top;
-      const isFlex=display==="flex",column=isFlex&&s.flexDirection?.startsWith("column"),children=node.childNodes;
-      let cursorY=contentY,cursorX=contentX,lineHeight=0,usedHeight=0,maxChildWidth=0;
-      const gap=px(s.gap),line=px(s.lineHeight,px(s.fontSize,16)*1.2||this.defaultLineHeight);
-      const inlineText=(text)=>{
-        const normalized=s.whiteSpace==="pre"?text:text.replace(/\s+/g," ");
-        for(const word of normalized.split(/(\s+)/)){
+      const boxX=x+margin.left,boxY=y+margin.top,contentX=boxX+border.left+padding.left,contentY=boxY+border.top+padding.top;
+      const lineHeight=px(s.lineHeight,px(s.fontSize,16)*1.2||this.defaultLineHeight),isFlex=display==="flex",column=isFlex&&String(s.flexDirection??"row").startsWith("column");
+      let cursorX=contentX,cursorY=contentY,lineUsed=0,flowHeight=0,maxWidth=0;
+      const addText=(raw)=>{
+        const value=String(raw).replace(/\s+/g," ");
+        const words=value.split(/(\s+)/);
+        for(const word of words){
           if(!word)continue;
           const wordWidth=measure(word,s);
-          if(s.whiteSpace!=="nowrap"&&cursorX+wordWidth>contentX+contentWidth&&cursorX>contentX){cursorY+=Math.max(lineHeight,line);usedHeight+=Math.max(lineHeight,line);cursorX=contentX;lineHeight=0;}
-          cursorX+=wordWidth;lineHeight=Math.max(lineHeight,line);
+          if(s.whiteSpace!=="nowrap"&&cursorX+wordWidth>contentX+contentWidth&&cursorX>contentX){
+            cursorY+=Math.max(lineUsed,lineHeight);flowHeight+=Math.max(lineUsed,lineHeight);cursorX=contentX;lineUsed=0;
+          }
+          textRuns.push({text:word,x:cursorX,y:cursorY+px(s.fontSize,16),maxWidth:Math.max(1,contentX+contentWidth-cursorX),style:s});
+          cursorX+=wordWidth;lineUsed=Math.max(lineUsed,lineHeight);
         }
       };
-      const flexItems=[];
-      for(const child of children){
-        if(child instanceof TextNode){if(isFlex){if(child.data.trim())flexItems.push({node:child,text:child.data,width:measure(child.data,s),height:line});}else inlineText(child.data);continue;}
-        if(!(child instanceof ElementNode))continue;
-        const childDisplay=child.computedStyle?.display??"inline";
-        if(isFlex){
-          const childStyle=child.computedStyle??{};
-          const minItemWidth=length(childStyle.minWidth,contentWidth,0);
-          const basis=length(childStyle.flexBasis,contentWidth,null)??length(childStyle.width,contentWidth,null);
-          flexItems.push({node:child,minWidth:minItemWidth,basis:basis??0,height:line});
-        }else if(childDisplay==="inline"||childDisplay==="inline-block"){
-          const childBox=layoutNode(child,cursorX,cursorY,Math.max(0,contentX+contentWidth-cursorX),availableHeight);
-          cursorX+=childBox.width;lineHeight=Math.max(lineHeight,childBox.height);
-          if(childDisplay==="inline-block")maxChildWidth=Math.max(maxChildWidth,cursorX-contentX);
-        }else{
-          if(cursorX>contentX){cursorY+=lineHeight;usedHeight+=lineHeight;cursorX=contentX;lineHeight=0;}
-          const childBox=layoutNode(child,contentX,cursorY,contentWidth,availableHeight);
-          cursorY+=childBox.height;usedHeight+=childBox.height;maxChildWidth=Math.max(maxChildWidth,childBox.width);
-        }
-      }
+      const children=node.childNodes.filter(child=>!(child.nodeType===8));
       if(isFlex){
-        if(!column){
-          const availableForItems=Math.max(0,contentWidth-gap*Math.max(0,flexItems.length-1));
-          const flexible=flexItems.filter(item=>item.node instanceof ElementNode&&String(item.node.computedStyle?.flex??"").trim().startsWith("1"));
-          const fixed=flexItems.reduce((sum,item)=>sum+(item.basis||item.minWidth||0),0);
-          const share=flexible.length?Math.max(0,(availableForItems-fixed)/flexible.length):availableForItems/Math.max(1,flexItems.length);
-          for(const item of flexItems){
-            const hasFlex=String(item.node?.computedStyle?.flex??"").trim().startsWith("1");
-            item.width=Math.max(item.minWidth,hasFlex?share:(item.basis||share));
-            const childBox=layoutNode(item.node,0,0,item.width,availableHeight,false);
-            item.width=childBox.width;item.height=childBox.height;
+        const items=children.map(child=>{
+          if(child instanceof TextNode)return {node:child,basis:measure(child.data.trim(),s),min:0,flex:0};
+          const cs=child.computedStyle??{},basis=length(cs.flexBasis,contentWidth,null)??length(cs.width,contentWidth,null)??0;
+          const flex=parseFloat(cs.flex??cs.flexGrow??"0")||0;
+          return {node:child,basis,min:length(cs.minWidth,contentWidth,0),flex};
+        });
+        const gap=px(s.columnGap??s.gap),availableMain=(column?availableHeight:contentWidth)-gap*Math.max(0,items.length-1);
+        const fixed=items.reduce((sum,item)=>sum+(item.flex?item.basis:item.basis),0);
+        const flexTotal=items.reduce((sum,item)=>sum+item.flex,0);
+        let offset=0,contentCross=0;
+        for(const item of items){
+          const mainSize=item.flex&&flexTotal?Math.max(item.min,item.basis+(Math.max(0,availableMain-fixed)*item.flex/flexTotal)):Math.max(item.min,item.basis||availableMain/Math.max(1,items.length));
+          if(item.node instanceof TextNode){
+            if(column){cursorY=contentY+offset;cursorX=contentX;addText(item.node.data);offset+=lineHeight+gap;}
+            else{cursorX=contentX+offset;cursorY=contentY;const start=textRuns.length;addText(item.node.data);offset+=mainSize+gap;}
+            continue;
+          }
+          const childWidth=column?contentWidth:mainSize;
+          const childX=column?contentX:contentX+offset;
+          const childY=column?contentY+offset:contentY;
+          const result=layoutNode(item.node,childX,childY,childWidth,availableHeight,childWidth);
+          offset+=(column?result.height:result.width)+gap;contentCross=Math.max(contentCross,column?result.width:result.height);
+        }
+        flowHeight=column?Math.max(0,offset-(items.length?gap:0)):contentCross;
+        maxWidth=column?contentWidth:Math.max(0,offset-(items.length?gap:0));
+      }else{
+        for(const child of children){
+          if(child instanceof TextNode){addText(child.data);continue;}
+          if(!(child instanceof ElementNode))continue;
+          const childDisplay=child.computedStyle?.display??"inline";
+          if(BLOCK.has(childDisplay)){
+            if(cursorX>contentX){const h=Math.max(lineUsed,lineHeight);cursorY+=h;flowHeight+=h;cursorX=contentX;lineUsed=0;}
+            const result=layoutNode(child,contentX,cursorY,contentWidth,availableHeight);
+            cursorY+=result.height;flowHeight+=result.height;maxWidth=Math.max(maxWidth,result.width);
+          }else{
+            const result=layoutNode(child,cursorX,cursorY,Math.max(0,contentX+contentWidth-cursorX),availableHeight);
+            cursorX+=result.width;lineUsed=Math.max(lineUsed,result.height);
+            if(cursorX>contentX+contentWidth){cursorX=contentX;cursorY+=lineUsed;flowHeight+=lineUsed;lineUsed=0;}
           }
         }
-        const totalMain=flexItems.reduce((sum,item)=>sum+(column?item.height:item.width),0)+Math.max(0,flexItems.length-1)*gap;
-        const free=Math.max(0,(column?availableHeight:contentWidth)-totalMain);
-        let offset=0,between=gap;
-        if(s.justifyContent==="center")offset=free/2;
-        else if(s.justifyContent==="flex-end")offset=free;
-        else if(s.justifyContent==="space-between"&&flexItems.length>1)between=gap+free/(flexItems.length-1);
-        else if(s.justifyContent==="space-around"&&flexItems.length){between=gap+free/flexItems.length;offset=free/(2*flexItems.length);}
-        for(const item of flexItems){
-          if(item.node instanceof TextNode){if(column){cursorY=contentY+offset;offset+=item.height+between;}else{cursorX=contentX+offset;offset+=item.width+between;}continue;}
-          if(column){const childX=s.alignItems==="center"?contentX+(contentWidth-item.width)/2:s.alignItems==="flex-end"?contentX+contentWidth-item.width:contentX;const box=layoutNode(item.node,childX,contentY+offset,contentWidth,availableHeight,true);offset+=box.height+between;}
-          else{const childY=s.alignItems==="center"?contentY+(line-item.height)/2:s.alignItems==="flex-end"?contentY+line-item.height:contentY;const box=layoutNode(item.node,contentX+offset,childY,item.width,availableHeight,true);offset+=box.width+between;usedHeight=Math.max(usedHeight,box.height);}
-        }
-        if(column)usedHeight=Math.max(0,offset-between);else usedHeight=Math.max(usedHeight,...flexItems.map(i=>i.height));
-      }else if(cursorX>contentX||lineHeight){cursorY+=lineHeight;usedHeight+=lineHeight;}
-      let naturalHeight=Math.max(usedHeight,cursorY-contentY);
-      if(s.display==="list-item")naturalHeight=Math.max(naturalHeight,line);
+        if(cursorX>contentX||lineUsed){const h=Math.max(lineUsed,lineHeight);flowHeight+=h;cursorY+=h;}
+      }
+      let naturalHeight=Math.max(flowHeight,node.tagName==="img"?(Number(node.getAttribute("height"))||node._intrinsicHeight||150):0);
       let contentHeight=length(s.height,availableHeight,null);
-      if(contentHeight!=null&&boxSizing==="border-box")contentHeight=Math.max(0,contentHeight-vertical);
-      contentHeight=clamp(contentHeight??(node.tagName==="img"?(Number(node.getAttribute("height"))||node._intrinsicHeight||150):naturalHeight),length(s.minHeight,availableHeight,0),length(s.maxHeight,availableHeight,null));
+      if(contentHeight!=null&&s.boxSizing==="border-box")contentHeight=Math.max(0,contentHeight-vertical);
+      contentHeight=clamp(contentHeight??naturalHeight,length(s.minHeight,availableHeight,0),length(s.maxHeight,availableHeight,null));
       const totalWidth=contentWidth+horizontal,totalHeight=contentHeight+vertical;
-      let finalX=x+margin.left,finalY=y+margin.top;
+      let finalX=boxX,finalY=boxY;
       if(s.position==="relative"){finalX+=px(s.left);finalY+=px(s.top);}
       node.layout={x:finalX,y:finalY,width:totalWidth,height:totalHeight,contentX:finalX+border.left+padding.left,contentY:finalY+border.top+padding.top,contentWidth,contentHeight,margin,padding,border};
-      if(collect)boxes.push(node);
+      boxes.push(node);
       return {width:totalWidth+margin.left+margin.right,height:totalHeight+margin.top+margin.bottom};
     };
     layoutNode(root,0,0,width,height);
     const contentHeight=Math.max(height,...boxes.map(node=>node.layout.y+node.layout.height));
-    return {width,height,contentHeight,boxes};
+    document._textRuns=textRuns;
+    return {width,height,contentHeight,boxes,textRuns};
   }
 }
