@@ -19,9 +19,10 @@ const asFileMap = files => {
 export function analyzeLegacyProject(files) {
   const fileMap = asFileMap(files);
   const findings = [];
-  for (const [path, content] of Object.entries(fileMap)) {
-    const extension = path.split(".").pop()?.toLowerCase();
-    if (!["js", "mjs", "cjs", "ts", "tsx", "jsx", "html", "json"].includes(extension)) continue;
+  const supportedFiles = Object.entries(fileMap).filter(([path]) =>
+    ["js", "mjs", "cjs", "ts", "tsx", "jsx", "html", "json"].includes(path.split(".").pop()?.toLowerCase())
+  );
+  for (const [path, content] of supportedFiles) {
     for (const rule of LEGACY_PATTERNS) {
       rule.pattern.lastIndex = 0;
       const matches = [...content.matchAll(rule.pattern)];
