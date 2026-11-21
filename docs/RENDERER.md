@@ -17,6 +17,8 @@ const view = new PolarisRenderer({
   onNavigate: (href) => console.log("Navigation requested:", href)
 });
 view.setHTML("<main><h1>Hello Polaris</h1><p>Rendered without an iframe.</p></main>");
+// Or load a page using normal Fetch/CORS rules:
+await view.loadURL("https://example.com/");
 ```
 
 ## Supported in this foundation
@@ -26,6 +28,7 @@ view.setHTML("<main><h1>Hello Polaris</h1><p>Rendered without an iframe.</p></ma
 - Basic block and inline flow, rudimentary flex row flow, pixel and percentage dimensions, margin/padding, and simple text measurement.
 - Canvas painting for backgrounds, text, and a basic border outline.
 - Basic hit testing and anchor navigation callbacks.
+- Native Fetch-based HTML and linked stylesheet loading, with HTTP(S)-only URLs, CORS enforcement, request timeouts, and response-size limits.
 
 ## Not yet browser-compatible
 
