@@ -31,8 +31,8 @@ export class PolarisDocumentRuntime extends EventTargetMixin {
   setAttribute(element,name,value){const oldValue=element.getAttribute(name);element.setAttribute(name,value);this.notifyMutation({type:"attributes",target:element,attributeName:name,oldValue});}
   setText(node,value){const oldValue=node.textContent;node.textContent=value;this.notifyMutation({type:"characterData",target:node,oldValue});}
   dispatch(target,event){return dispatchPolarisEvent(target,event);}
-  focus(element){if(this.activeElement===element)return;this.activeElement?.dispatchEvent?.(new PolarisEvent("blur"));this.activeElement=element;this.document.activeElement=element;element?.dispatchEvent?.(new PolarisEvent("focus"));}
-  blur(element){if(this.activeElement!==element)return;this.activeElement=null;this.document.activeElement=null;element.dispatchEvent(new PolarisEvent("blur"));}
+  focus(element){if(this.activeElement===element)return;this.activeElement?._focus=false;this.activeElement?.dispatchEvent?.(new PolarisEvent("blur"));this.activeElement=element;if(element)element._focus=true;this.document.activeElement=element;element?.dispatchEvent?.(new PolarisEvent("focus"));}
+  blur(element){if(this.activeElement!==element)return;this.activeElement=null;element._focus=false;this.document.activeElement=null;element.dispatchEvent(new PolarisEvent("blur"));}
   submit(form,submitter=null){const event=new PolarisEvent("submit",{bubbles:true,cancelable:true,detail:{submitter}});const accepted=this.dispatch(form,event);if(accepted)this.onSubmit(form,submitter);return accepted;}
   _decorateElement(el){
     el.ownerDocument=this.document;
