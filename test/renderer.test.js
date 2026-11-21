@@ -4,6 +4,7 @@ import { parseHTML } from "../src/renderer/html-parser.js";
 import { parseCSS, selectorSpecificity } from "../src/renderer/css-parser.js";
 import { StyleEngine } from "../src/renderer/style-engine.js";
 import { LayoutEngine } from "../src/renderer/layout-engine.js";
+import { PaintEngine } from "../src/renderer/paint-engine.js";
 
 test("HTML parser builds document, elements, attributes and decoded text", () => {
   const doc=parseHTML('<!doctype html><html><head><title>Test</title></head><body><main id="app"><p class="x">A &amp; B</p><img src="a.png"></main></body></html>');
