@@ -29,7 +29,7 @@ test("converter rejects invalid replacement rules", () => {
 });
 
 test("migration plan identifies manual transport work", () => {
-  const analysis = analyzeLegacyProject({ "src/worker.js": 'importScripts("/bare/worker.js");' });
+  const analysis = analyzeLegacyProject({ "src/worker.js": 'import { BareMux } from "@bare-mux/bridge";' });
   const plan = createMigrationPlan(analysis);
   assert.equal(plan.steps.find(step => step.id === "transport").status, "required");
   assert.equal(plan.steps.find(step => step.id === "inventory").status, "done");
