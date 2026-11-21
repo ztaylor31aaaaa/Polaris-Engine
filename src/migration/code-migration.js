@@ -23,7 +23,7 @@ export function analyzeLegacyProject(files) {
   const fileMap = asFileMap(files);
   const findings = [];
   const supportedFiles = Object.entries(fileMap).filter(([path]) =>
-    ["js", "mjs", "cjs", "ts", "tsx", "jsx", "html", "json"].includes(path.split(".").pop()?.toLowerCase())
+    ["js", "mjs", "cjs", "ts", "tsx", "jsx", "html", "json", "vue", "svelte", "astro"].includes(path.split(".").pop()?.toLowerCase())
   );
   for (const [path, content] of supportedFiles) {
     for (const rule of LEGACY_PATTERNS) {
@@ -56,6 +56,8 @@ export function analyzeLegacyProject(files) {
  * guessing the semantics of Scramjet/Ultraviolet APIs or rewriting arbitrary application code.
  */
 export function convertLegacyProject(files, { replacements = [], include = null } = {}) {
+  if (!Array.isArray(replacements)) throw new TypeError("replacements must be an array.");
+  if (include !== null && !Array.isArray(include)) throw new TypeError("include must be an array of file paths.");
   const fileMap = asFileMap(files);
   const allowed = include ? new Set(include) : null;
   const convertedFiles = {};
@@ -63,13 +65,30 @@ export function convertLegacyProject(files, { replacements = [], include = null 
   for (const [path, original] of Object.entries(fileMap)) {
     let content = original;
     if (!allowed || allowed.has(path)) {
-      for (const rule of replacements) {
+      for (let index = 0; index < replacements.length; index++) {
+        const rule = replacements[index];
         if (!rule || typeof rule.from !== "string" || !rule.from) throw new TypeError("Each replacement requires a non-empty from string.");
         if (typeof rule.to !== "string") throw new TypeError("Each replacement requires a string to value.");
+        if (rule.paths !== undefined && (!Array.isArray(rule.paths) || !rule.paths.every(item => typeof item === "string"))) {
+          throw new TypeError("Replacement paths must be an array of file paths.");
+        }
+        if (rule.paths && !rule.paths.includes(path)) continue;
         const count = content.split(rule.from).length - 1;
+        if (rule.expectedOccurrences !== undefined && count !== rule.expectedOccurrences) {
+          throw new Error("Replacement " + index + " expected " + rule.expectedOccurrences + " occurrence(s) in " + path + " but found " + count + ".");
+        }
+        if (rule.maxOccurrences !== undefined && (!Number.isInteger(rule.maxOccurrences) || rule.maxOccurrences < 0 || count > rule.maxOccurrences)) {
+          throw new Error("Replacement " + index + " exceeded its maxOccurrences limit in " + path + ".");
+        }
         if (count) {
+          const lineNumbers = [];
+          let cursor = 0;
+          while ((cursor = content.indexOf(rule.from, cursor)) !== -1) {
+            lineNumbers.push(content.slice(0, cursor).split("\n").length);
+            cursor += rule.from.length;
+          }
           content = content.split(rule.from).join(rule.to);
-          changes.push({ path, from: rule.from, to: rule.to, occurrences: count });
+          changes.push({ path, from: rule.from, to: rule.to, occurrences: count, lineNumbers, replacementIndex: index });
         }
       }
     }
