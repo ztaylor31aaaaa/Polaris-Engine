@@ -1,3 +1,4 @@
+import { createStyleDeclaration } from "./style-declaration.js";
 let nextNodeId = 1;
 
 export class PolarisNode {
@@ -53,6 +54,7 @@ export class PolarisNode {
     const list = this.parentNode.childNodes, i = list.indexOf(this);
     return list[i - 1] ?? null;
   }
+  get parentElement() { return this.parentNode instanceof ElementNode ? this.parentNode : null; }
   get textContent() {
     if (this.nodeType === 3 || this.nodeType === 8) return this.data;
     return this.childNodes.map(node => node.textContent).join("");
@@ -97,7 +99,7 @@ export class ElementNode extends PolarisNode {
     super(1, tag.toUpperCase());
     this.tagName = tag;
     this.attributes = new Map(Object.entries(attributes).map(([k,v]) => [k.toLowerCase(), String(v)]));
-    this.style = Object.create(null);
+    this.style = createStyleDeclaration(this);
     this.computedStyle = Object.create(null);
     this.layout = { x:0, y:0, width:0, height:0 };
     this.listeners = new Map();
@@ -133,6 +135,9 @@ export class ElementNode extends PolarisNode {
   }
   get children() { return this.childNodes.filter(n => n instanceof ElementNode); }
   get firstElementChild() { return this.children[0] ?? null; }
+  get parentElement() { return this.parentNode instanceof ElementNode ? this.parentNode : null; }
+  get nextElementSibling() { let n=this.nextSibling;while(n&&!(n instanceof ElementNode))n=n.nextSibling;return n; }
+  get previousElementSibling() { let n=this.previousSibling;while(n&&!(n instanceof ElementNode))n=n.previousSibling;return n; }
   get lastElementChild() { return this.children.at(-1) ?? null; }
   get childElementCount() { return this.children.length; }
   get nextElementSibling() { let n=this.nextSibling;while(n&&!(n instanceof ElementNode))n=n.nextSibling;return n; }
