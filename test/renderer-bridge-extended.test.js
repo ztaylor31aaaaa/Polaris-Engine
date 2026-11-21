@@ -14,6 +14,8 @@ test("extended bridge exposes safe DOM traversal and properties",async()=>{
  assert.equal((await call(3,"getParent",{nodeId:p.nodeId})).result,main.nodeId);
  assert.equal((await call(4,"matches",{nodeId:p.nodeId,selector:".copy"})).result,true);
  assert.equal((await call(5,"getChildren",{nodeId:main.nodeId})).result.length,1);
+ assert.equal((await call(7,"querySelector",{nodeId:doc.nodeId,selector:".copy"})).result,p.nodeId);
+ assert.equal((await call(8,"querySelectorAll",{nodeId:doc.nodeId,selector:"main p"})).result.length,1);
  assert.equal((await call(6,"getProperty",{nodeId:p.nodeId,name:"ownerDocument"})).type,"error");
  bridge.close();
 });
