@@ -26,8 +26,10 @@ function mediaMatches(condition,context={}){
   const width=context.width??1024,height=context.height??768,scheme=context.colorScheme??"light";
   for(const query of condition.split(/\s*,\s*/)){
     const q=query.toLowerCase();let valid=true;
-    for(const [,kind,value] of q.matchAll(/\((min|max)-(width|height)\s*:\s*([\d.]+)px\)/g)){
-      const actual=kind==="width"?width:height,expected=Number(value);if(kind==="min"&&actual<expected)valid=false;if(kind==="max"&&actual>expected)valid=false;
+    for(const [,bound,dimension,amount] of q.matchAll(/\\((min|max)-(width|height)\\s*:\\s*([\\d.]+)px\\)/g)){
+      const actual=dimension==="width"?width:height,expected=Number(amount);
+      if(bound==="min"&&actual<expected)valid=false;
+      if(bound==="max"&&actual>expected)valid=false;
     }
     const orientation=q.match(/\(orientation\s*:\s*(portrait|landscape)\)/);if(orientation&&((orientation[1]==="portrait")!==(height>=width)))valid=false;
     const color=q.match(/\(prefers-color-scheme\s*:\s*(dark|light)\)/);if(color&&color[1]!==scheme)valid=false;
