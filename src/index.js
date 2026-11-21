@@ -26,6 +26,7 @@ export { detectPlatform, requirePlatformFeatures } from "./platform/web-platform
 export { WorkerManager } from "./platform/worker-manager.js";
 export { MessageRPC } from "./platform/message-rpc.js";
 export { FetchAdapter, FetchTimeoutError } from "./platform/fetch-adapter.js";
+export { WebSocketAdapter, EventSourceAdapter, BroadcastChannelAdapter } from "./platform/realtime-adapters.js";
 export { DOMObserver } from "./dom/dom-observer.js";
 export { mimeFromExtension, extensionFromMime, isTextMime, normaliseMime } from "./utils/mime.js";
 export { TransportProviderManager } from "./transport/provider-manager.js";
