@@ -39,7 +39,13 @@ export class StyleEngine {
         if (!previous || rank[0] > previous.rank[0] || (rank[0] === previous.rank[0] && (rank[1] > previous.rank[1] || (rank[1] === previous.rank[1] && rank[2] >= previous.rank[2])))) candidates.set(property,{value,rank});
       };
       for (const rule of this.rules) {
-        try { if (matchesSelector(node, rule.selector)) for (const d of rule.declarations) apply(d.property,d.value,d.important,selectorSpecificity(rule.selector),rule.order); } catch {}
+        try {
+          const selector = rule.selector.trim();
+          const simpleMatch = selector.startsWith(".") && !selector.includes(" ") ? node.classList.contains(selector.slice(1)) :
+            selector.startsWith("#") && !selector.includes(" ") ? node.id === selector.slice(1) :
+            /^[a-z][\\w-]*$/i.test(selector) ? node.tagName === selector.toLowerCase() : matchesSelector(node, selector);
+          if (simpleMatch) for (const d of rule.declarations) apply(d.property,d.value,d.important,selectorSpecificity(rule.selector),rule.order);
+        } catch {}
       }
       const inline = node.getAttribute("style");
       if (inline) {
