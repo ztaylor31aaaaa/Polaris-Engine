@@ -4,8 +4,9 @@ import path from "node:path";
 import { analyzeLegacyProject, createMigrationPlan } from "../src/migration/code-migration.js";
 
 const args = process.argv.slice(2);
-const root = path.resolve(args.find(arg => !arg.startsWith("--")) || ".");
 const outputFlag = args.indexOf("--out");
+const positional = args.filter((arg, index) => !arg.startsWith("--") && index !== outputFlag + 1);
+const root = path.resolve(positional[0] || ".");
 const outputPath = outputFlag >= 0 ? path.resolve(args[outputFlag + 1] || "polaris-migration-plan.json") : null;
 const extensions = new Set([".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".html", ".json"]);
 const ignored = new Set(["node_modules", ".git", "dist", "build", ".next", ".cache"]);
