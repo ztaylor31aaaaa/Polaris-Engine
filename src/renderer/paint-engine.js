@@ -29,7 +29,7 @@ export class PaintEngine {
     for(const run of layout.textRuns??document._textRuns??[]){
       const s=run.style??{};context.save();context.fillStyle=s.color??"#000";
       context.font=`${s.fontStyle??"normal"} ${s.fontWeight??"400"} ${s.fontSize??"16px"} ${s.fontFamily??"Arial"}`;
-      context.textBaseline="alphabetic";context.textAlign="left";
+      context.textBaseline="alphabetic";context.textAlign="left";if("letterSpacing" in context)context.letterSpacing=s.letterSpacing??"0px";
       context.fillText(run.text,run.x,run.y,run.maxWidth??layout.width);context.restore();
     }
     context.restore();context.restore();
