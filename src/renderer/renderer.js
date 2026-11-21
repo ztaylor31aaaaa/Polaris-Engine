@@ -17,6 +17,7 @@ export class PolarisRenderer {
     this.parser=options.parser??new HTMLParser();this.styles=options.styleEngine??new StyleEngine();
     this.viewportState=new RendererViewport({width:options.width??this.canvas?.clientWidth??this.canvas?.width??1024,height:options.height??this.canvas?.clientHeight??this.canvas?.height??768,devicePixelRatio:options.devicePixelRatio??globalThis.devicePixelRatio??1});
     this.viewport={width:this.viewportState.width,height:this.viewportState.height,devicePixelRatio:this.viewportState.devicePixelRatio};
+    if(this.canvas){const dpr=this.viewportState.devicePixelRatio;this.canvas.style&&(this.canvas.style.width=this.viewportState.width+"px",this.canvas.style.height=this.viewportState.height+"px");this.canvas.width=Math.round(this.viewportState.width*dpr);this.canvas.height=Math.round(this.viewportState.height*dpr);}
     this.layoutEngine=options.layoutEngine??new LayoutEngine({measureText:(text,size,font)=>{if(this.context){this.context.save();this.context.font=`${size}px ${font??"Arial"}`;const width=this.context.measureText(String(text)).width;this.context.restore();return width;}return String(text).length*size*.52;}});
     this.painter=options.paintEngine??new PaintEngine(options);this.resourceLoader=options.resourceLoader??new ResourceLoader(options.resources);
     this.imageLoader=options.imageLoader??new ImageResourceLoader({resourceLoader:this.resourceLoader});this.images=new Map();
