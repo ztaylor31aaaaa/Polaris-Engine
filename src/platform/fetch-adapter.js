@@ -74,7 +74,10 @@ export class FetchAdapter {
     const startedAt = globalThis.performance?.now?.() ?? Date.now();
 
     try {
-      const response = await this.fetchImpl(url, requestInit);
+      const requestInput = input instanceof Request ? new Request(input, requestInit) : url;
+      const response = input instanceof Request
+        ? await this.fetchImpl(requestInput)
+        : await this.fetchImpl(requestInput, requestInit);
       const duration = (globalThis.performance?.now?.() ?? Date.now()) - startedAt;
       this.events.emit("fetch:response", { url, method, status: response.status, ok: response.ok, duration });
       return response;
