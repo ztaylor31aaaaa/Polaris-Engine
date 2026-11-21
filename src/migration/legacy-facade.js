@@ -68,8 +68,12 @@ export function createLegacyMigrationFacade({ tabs, views, runtimes = null } = {
     },
     async dispose() {
       if (disposed) return;
-      for (const tabId of [...managedTabs]) await this.close(tabId);
+      const failures = [];
+      for (const tabId of [...managedTabs]) {
+        try { await this.close(tabId); } catch (error) { failures.push(error); }
+      }
       disposed = true;
+      if (failures.length) throw new AggregateError(failures, "One or more managed tabs failed to clean up.");
     },
     get disposed() { return disposed; },
     get managedTabIds() { return [...managedTabs]; }
