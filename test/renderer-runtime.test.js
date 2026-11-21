@@ -146,3 +146,18 @@ test("DOM node clone and insertion helpers preserve tree ownership",()=>{
  assert.equal(main.children.length,2);assert.equal(main.children[1].textContent,"B");
  assert.equal(clone.isConnected,true);clone.remove();assert.equal(clone.isConnected,false);
 });
+
+import { WorkerEngineAdapter } from "../src/renderer/worker-engine-adapter.js";
+
+test("worker engine adapter routes create, evaluate and dispose RPC calls",async()=>{
+ class FakeWorker{
+  listeners=new Map();messages=[];terminated=false;
+  addEventListener(type,callback){const list=this.listeners.get(type)??[];list.push(callback);this.listeners.set(type,list);}
+  postMessage(message){this.messages.push(message);queueMicrotask(()=>{const result=message.type==="create-context"?{contextId:"ctx-1"}:message.type==="evaluate"?{value:message.source.length}:{disposed:true};for(const callback of this.listeners.get("message")??[])callback({data:{channel:"polaris-script",id:message.id,type:"result",result}});});}
+  terminate(){this.terminated=true;}
+ }
+ const worker=new FakeWorker(),adapter=new WorkerEngineAdapter({workerFactory:()=>worker});
+ const context=await adapter.createContext({permissions:["dom:read"],limits:{timeoutMs:2000}});
+ const result=await context.evaluate("2 + 2",{filename:"test.js"});
+ assert.equal(result.value,5);await context.dispose();await adapter.close();assert.equal(worker.terminated,true);
+});
