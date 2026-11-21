@@ -58,3 +58,7 @@ export { ImageResourceLoader } from "./renderer/image-loader.js";
 export { buildAccessibilityTree } from "./renderer/accessibility.js";
 export { RendererViewport } from "./renderer/viewport.js";
 export { PolarisScriptBridge } from "./renderer/script-bridge.js";
+
+export { createStyleDeclaration } from "./renderer/style-declaration.js";
+export { RendererNetworkPolicy } from "./renderer/network-policy.js";
+export { RENDERER_CAPABILITIES, getRendererCapabilities, supportsRendererFeature } from "./renderer/runtime-capabilities.js";
