@@ -14,6 +14,8 @@ export class PolarisDOMBridge extends PolarisScriptBridge {
     add("getTextContent",a=>node(a.nodeId).textContent);
     add("setTextContent",a=>{node(a.nodeId).textContent=String(a.value??"");return true;});
     add("getElementById",a=>this.runtime.document.getElementById(a.id)?.nodeId??null);
+    add("querySelector",a=>node(a.nodeId).querySelector(a.selector)?.nodeId??null);
+    add("querySelectorAll",a=>node(a.nodeId).querySelectorAll(a.selector).map(n=>n.nodeId));
     add("hasAttribute",a=>el(a.nodeId).hasAttribute(a.name));
     add("getProperty",a=>{if(!PROPERTIES.has(a.name))throw new Error("Property is not exposed");return el(a.nodeId)[a.name]??null;});
     add("setProperty",a=>{if(!PROPERTIES.has(a.name))throw new Error("Property is not exposed");el(a.nodeId)[a.name]=a.value;return true;});
