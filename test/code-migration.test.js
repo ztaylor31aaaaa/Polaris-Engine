@@ -61,3 +61,31 @@ test("scanner recognises legacy config and worker APIs", () => {
   assert.ok(result.findings.some(item => item.id === "scramjet-worker"));
   assert.ok(result.findings.some(item => item.id === "bare-mux"));
 });
+
+test("converter reports exact changed lines and supports per-file limits", () => {
+  const result = convertLegacyProject({
+    "src/a.js": 'old\nconst value = "old";',
+    "src/b.js": "old"
+  }, {
+    replacements: [{ from: "old", to: "new", paths: ["src/a.js"], expectedOccurrences: 2, maxOccurrences: 2 }]
+  });
+  assert.deepEqual(result.changes[0].lineNumbers, [1, 2]);
+  assert.equal(result.files["src/a.js"], 'new\nconst value = "new";');
+  assert.equal(result.files["src/b.js"], "old");
+});
+
+test("converter refuses unexpected occurrence counts before accepting a codemod", () => {
+  assert.throws(() => convertLegacyProject({ "a.js": "old old" }, {
+    replacements: [{ from: "old", to: "new", expectedOccurrences: 1 }]
+  }), /expected 1 occurrence/);
+});
+
+test("scanner includes common component source files", () => {
+  const result = analyzeLegacyProject({
+    "App.vue": 'new ScramjetController()',
+    "Widget.svelte": 'const uvConfig = {};',
+    "page.astro": 'new UVServiceWorker()'
+  });
+  assert.equal(result.filesScanned, 3);
+  assert.ok(result.findings.length >= 3);
+});
