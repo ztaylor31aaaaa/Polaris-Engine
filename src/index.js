@@ -66,3 +66,5 @@ export { RENDERER_CAPABILITIES, getRendererCapabilities, supportsRendererFeature
 export { ScriptRuntime } from "./renderer/script-runtime.js";
 
 export { WorkerEngineAdapter } from "./renderer/worker-engine-adapter.js";
+
+export { installPolarisScriptWorker } from "./renderer/script-worker-host.js";
