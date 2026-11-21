@@ -1,11 +1,11 @@
 const LEGACY_PATTERNS = [
-  { id: "scramjet-import", engine: "scramjet", severity: "convertible", pattern: /(?:from\\s*|import\\s*\\()(["'][^"']*(?:scramjet|scramjet\\.all)[^"']*["'])/gi, message: "Legacy Scramjet module import detected.", suggestion: "Replace the import with the Polaris Engine APIs used by this project." },
-  { id: "ultraviolet-import", engine: "ultraviolet", severity: "convertible", pattern: /(?:from\\s*|import\\s*\\()(["'][^"']*(?:ultraviolet|uv\\.bundle)[^"']*["'])/gi, message: "Legacy Ultraviolet module import detected.", suggestion: "Replace the import with the Polaris Engine APIs used by this project." },
-  { id: "scramjet-controller", engine: "scramjet", severity: "manual", pattern: /\\bScramjetController\\b/g, message: "ScramjetController usage found.", suggestion: "Replace controller setup with Polaris Engine's runtime, navigation and view adapters." },
-  { id: "ultraviolet-class", engine: "ultraviolet", severity: "manual", pattern: /\\bUltraviolet\\b|\\bUVConfig\\b/g, message: "Ultraviolet runtime/configuration usage found.", suggestion: "Map the configuration fields explicitly; there is no universal one-to-one runtime API." },
-  { id: "bare-mux", engine: "transport", severity: "manual", pattern: /\\bBareMux\\b|\\bBareClient\\b|\\bEpoxy\\b/g, message: "Legacy transport dependency found.", suggestion: "Remove the legacy transport dependency and use an explicitly authorised Polaris transport provider, or native browser APIs." },
-  { id: "service-worker-import", engine: "service-worker", severity: "review", pattern: /importScripts\\s*\\([^)]*(?:scramjet|uv|bare)/gi, message: "Legacy runtime code is imported by a service worker.", suggestion: "Review and replace the worker architecture. Polaris does not silently install a proxy worker." },
-  { id: "global-rewrite", engine: "runtime", severity: "review", pattern: /\\b(location\\.href|window\\.location|fetch\\s*\\()/g, message: "Direct browser navigation or Fetch usage found.", suggestion: "Review whether native navigation/fetch or a Polaris adapter is appropriate; these calls are not automatically rewritten." }
+  { id: "scramjet-import", engine: "scramjet", severity: "convertible", pattern: /(?:from\s*|import\s*\()(["'][^"']*(?:scramjet|scramjet\.all)[^"']*["'])/gi, message: "Legacy Scramjet module import detected.", suggestion: "Replace the import with the Polaris Engine APIs used by this project." },
+  { id: "ultraviolet-import", engine: "ultraviolet", severity: "convertible", pattern: /(?:from\s*|import\s*\()(["'][^"']*(?:ultraviolet|uv\.bundle)[^"']*["'])/gi, message: "Legacy Ultraviolet module import detected.", suggestion: "Replace the import with the Polaris Engine APIs used by this project." },
+  { id: "scramjet-controller", engine: "scramjet", severity: "manual", pattern: /\bScramjetController\b/g, message: "ScramjetController usage found.", suggestion: "Replace controller setup with Polaris Engine's runtime, navigation and view adapters." },
+  { id: "ultraviolet-class", engine: "ultraviolet", severity: "manual", pattern: /\bUltraviolet\b|\bUVConfig\b/g, message: "Ultraviolet runtime/configuration usage found.", suggestion: "Map the configuration fields explicitly; there is no universal one-to-one runtime API." },
+  { id: "bare-mux", engine: "transport", severity: "manual", pattern: /\bBareMux\b|\bBareClient\b|\bEpoxy\b/g, message: "Legacy transport dependency found.", suggestion: "Remove the legacy transport dependency and use an explicitly authorised Polaris transport provider, or native browser APIs." },
+  { id: "service-worker-import", engine: "service-worker", severity: "review", pattern: /importScripts\s*\([^)]*(?:scramjet|uv|bare)/gi, message: "Legacy runtime code is imported by a service worker.", suggestion: "Review and replace the worker architecture. Polaris does not silently install a proxy worker." },
+  { id: "global-rewrite", engine: "runtime", severity: "review", pattern: /\b(location\.href|window\.location|fetch\s*\()/g, message: "Direct browser navigation or Fetch usage found.", suggestion: "Review whether native navigation/fetch or a Polaris adapter is appropriate; these calls are not automatically rewritten." }
 ];
 
 const asFileMap = files => {
@@ -28,7 +28,7 @@ export function analyzeLegacyProject(files) {
       findings.push({
         id: rule.id, path, engine: rule.engine, severity: rule.severity,
         occurrences: matches.length,
-        lines: [...new Set(matches.map(match => content.slice(0, match.index).split("\\n").length))],
+        lines: [...new Set(matches.map(match => content.slice(0, match.index).split("\n").length))],
         message: rule.message, suggestion: rule.suggestion
       });
     }
