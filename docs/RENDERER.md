@@ -72,3 +72,22 @@ await renderer.loadURL("https://example.org/");
 ```
 
 `createQuickJsAdapter` above is an application-supplied adapter, not a built-in Polaris export. The adapter must implement the documented isolated context contract. The bridge alone does not make JavaScript execution available; the default capability remains disabled until a compatible engine is configured and tested.
+
+## Renderer-backed frame compatibility
+
+`PolarisFrameCompatibility` provides a frame-shaped host object for code that previously expected a frame controller. Its `frame` property is the supplied canvas element, while `contentWindow` and `contentDocument` expose the supported Polaris facade. The `go(url)` and `load(url)` methods load a document through the renderer; `setHTML(html)` installs an in-memory document. The facade also exposes a restricted `location`, `history`, `navigator`, `screen`, event-target methods, scrolling, sizing and basic window timers.
+
+```js
+import { createPolarisFrame } from "@polaris/engine/renderer/frame-compatibility";
+
+const view = createPolarisFrame({
+  canvas: document.querySelector("#page-surface"),
+  onNavigate(url) { console.info("Polaris navigation:", url); }
+});
+
+await view.go("https://example.org/");
+console.log(view.contentDocument.title);
+view.destroy();
+```
+
+This is a compatibility facade, not a native browser frame. It does not implement every `Window`, `Document`, `HTMLElement`, or `HTMLIFrameElement` member, and it does not execute arbitrary page scripts by itself. Network loads use the host browser's ordinary fetch behavior and remain subject to CORS, CSP, authentication, server headers and network policy. The facade is intended to make migration of frame lifecycle and document access easier while unsupported APIs are identified and implemented deliberately.
