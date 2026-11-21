@@ -98,7 +98,7 @@ export class DocumentNode extends PolarisNode {
   getElementsByTagName(tag) { return this.querySelectorAll(tag); }
   querySelector(selector) { return this.querySelectorAll(selector)[0] ?? null; }
   querySelectorAll(selector) {
-    const groups = String(selector).split(",").map(s => s.trim()).filter(Boolean);
+    const groups = splitSelectorGroups(String(selector));
     const result = [];
     for (const node of this.walk()) {
       if (node instanceof ElementNode && groups.some(group => matchesSelector(node, group))) result.push(node);
@@ -177,8 +177,13 @@ export class CommentNode extends PolarisNode {
   constructor(data) { super(8, "#comment"); this.data = String(data); }
 }
 
+function splitSelectorGroups(selector){
+  const groups=[];let start=0,depth=0,quote="";
+  for(let i=0;i<selector.length;i++){const c=selector[i];if(quote){if(c===quote&&selector[i-1]!=="\\")quote="";continue;}if(c==="'"||c==='"'){quote=c;continue;}if(c==="["||c==="(")depth++;else if(c==="]"||c===")")depth--;else if(c===","&&depth===0){groups.push(selector.slice(start,i).trim());start=i+1;}}
+  groups.push(selector.slice(start).trim());return groups.filter(Boolean);
+}
 function queryWithin(root, selector, includeRoot) {
-  const groups = String(selector).split(",").map(s => s.trim()).filter(Boolean), out = [];
+  const groups = splitSelectorGroups(String(selector)), out = [];
   for (const node of root.walk()) if ((includeRoot || node !== root) && node instanceof ElementNode && groups.some(g => matchesSelector(node,g))) out.push(node);
   return out;
 }
