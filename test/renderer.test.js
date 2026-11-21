@@ -85,3 +85,22 @@ test("CSS shorthand declarations affect computed box model and borders",()=>{
  assert.equal(card.computedStyle.paddingLeft,"3px");assert.equal(card.computedStyle.borderTopWidth,"2px");
  assert.equal(card.computedStyle.borderTopStyle,"solid");assert.equal(card.computedStyle.borderTopColor,"red");
 });
+
+test("layout engine supports flex rows and intrinsic image dimensions",()=>{
+ const doc=parseHTML('<div class="row"><img src="planet.png"><span>Label</span></div><style>.row{display:flex;gap:8px}</style>');
+ const image=doc.querySelector("img");image._intrinsicWidth=64;image._intrinsicHeight=48;
+ const styles=new StyleEngine();styles.addStylesheet(doc.querySelector("style").textContent);styles.compute(doc);
+ const layout=new LayoutEngine().layout(doc,{width:500,height:300});
+ assert.equal(image.layout.width,64);assert.equal(image.layout.height,48);
+ assert.ok(doc.querySelector(".row").layout.width>64);assert.ok(layout.boxes.length>=3);
+});
+test("paint engine paints a document into a canvas-like context",()=>{
+ const calls=[];
+ const context={canvas:{width:320,height:200},clearRect(){calls.push("clear");},fillRect(){calls.push("fill");},save(){},restore(){},beginPath(){},rect(){},clip(){},translate(){},fillText(text){calls.push(text);},measureText(text){return {width:String(text).length*8};}};
+ const doc=parseHTML("<main><h1>Polaris</h1><p>Renderer test</p></main>");
+ const styles=new StyleEngine();styles.compute(doc);
+ const layout=new LayoutEngine().layout(doc,{width:320,height:200});
+ const {PaintEngine}=awaitImportPaintEngine();
+ const painter=new PaintEngine();painter.paint(doc,layout,context,{scrollY:10});
+ assert.ok(calls.includes("Polaris"));assert.ok(calls.includes("Renderer test"));
+});
