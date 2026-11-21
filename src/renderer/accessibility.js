@@ -11,5 +11,6 @@ export function buildAccessibilityTree(document){
     const name=label||children.map(child=>child.name).filter(Boolean).join(" ");
     return {role,name,tagName:node.tagName,id:node.id||null,disabled:node.hasAttribute("disabled"),checked:node.checked??false,children};
   };
-  return document.childNodes.map(visit).filter(Boolean);
+  const root=document.body??document.documentElement;
+  return root?root.childNodes.map(visit).filter(Boolean):[];
 }
