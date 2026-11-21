@@ -33,9 +33,12 @@ After installing the package, run the scanner against an existing project:
 
 ```sh
 npx polaris-migrate ./my-existing-app --out polaris-migration-plan.json
+```sh
+npx polaris-migrate ./my-existing-app --format markdown --out migration-report.md
+```
 ```
 
-The command scans supported JavaScript, TypeScript, HTML and JSON files, skips common generated/dependency folders, and writes a JSON migration plan. It does not edit source files. Exit code `2` means legacy references were found; exit code `1` means the scan failed.
+The command scans supported JavaScript, TypeScript, HTML and JSON files, skips common generated/dependency folders, and writes a JSON report by default. Use `--format markdown` (or `--format md`) for a human-readable report with ordered steps, file/line locations and starter examples. It does not edit source files. Exit code `2` means legacy references were found; exit code `1` means the scan failed.
 
 ## 2. Apply controlled replacements
 
