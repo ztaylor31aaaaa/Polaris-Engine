@@ -64,3 +64,19 @@ test("legacy facade removes tab state even when view cleanup reports an error", 
   assert.equal(state.tabs.tabs.length, 0);
   assert.deepEqual(state.stopped, [opened.tab.id]);
 });
+
+test("facade disposal attempts every managed tab after a cleanup failure", async () => {
+  const state = setup();
+  const facade = createLegacyMigrationFacade(state);
+  const first = await facade.open("https://one.example");
+  const second = await facade.open("https://two.example");
+  const unmount = state.views.unmount;
+  state.views.unmount = async ({ tabId }) => {
+    if (tabId === first.tab.id) throw new Error("first cleanup failed");
+    return unmount({ tabId });
+  };
+  await assert.rejects(facade.dispose(), AggregateError);
+  assert.equal(facade.disposed, true);
+  assert.equal(state.tabs.tabs.length, 0);
+  assert.deepEqual(state.stopped.sort(), [first.tab.id, second.tab.id].sort());
+});
