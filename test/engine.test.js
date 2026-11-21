@@ -34,3 +34,17 @@ test("navigation maintains back and forward state", async () => {
   assert.equal(nav.current.url, "https://example.org/");
   assert.equal(opened.length, 4);
 });
+
+
+test("tab manager restores the previously active tab", () => {
+  const original = new TabManager();
+  const first = original.create({ title: "First", url: "https://first.example" });
+  const second = original.create({ title: "Second", url: "https://second.example" });
+  const snapshot = original.serialise();
+  const restored = new TabManager();
+  restored.restore(snapshot);
+  assert.equal(restored.active.title, "Second");
+  assert.notEqual(restored.active.id, second.id);
+  assert.equal(restored.tabs.length, 2);
+  assert.notEqual(restored.active.id, first.id);
+});
