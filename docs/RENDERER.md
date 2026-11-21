@@ -35,7 +35,7 @@ For network-loaded documents, use `await renderer.loadURL("https://example.com/"
 
 Polaris does **not** run downloaded page scripts in its own application JavaScript realm. The `ScriptRuntime` requires an explicitly supplied `engine` adapter implementing `createContext({ bridge, permissions, limits })`, returning a context with `evaluate(source, { filename, timeoutMs })` and `dispose()`.
 
-This is an integration point for a genuinely isolated engine such as a separately hosted QuickJS/WASM runtime. The bridge exposes a small allowlist of document operations; it is not a general host-object tunnel. Without an isolated engine adapter, scripts are not executed. JavaScript modules, dynamic imports, timers/async scheduling compatibility and full browser globals are not yet implemented. Do not connect an adapter that evaluates untrusted page source in the Polaris host realm.
+The `WorkerEngineAdapter` and `installPolarisScriptWorker` provide the host/worker RPC protocol for a separately bundled engine such as QuickJS/WASM. The worker-side host forwards approved DOM bridge calls to Polaris and enforces message/context limits. The actual interpreter implementation must still be supplied by the host; Polaris does not bundle a complete JavaScript interpreter. The bridge exposes an allowlist of document operations; it is not a general host-object tunnel. Without an isolated engine adapter, scripts are not executed. JavaScript modules, dynamic imports, timers/async scheduling compatibility and full browser globals are not yet implemented. Do not connect an adapter that evaluates untrusted page source in the Polaris host realm.
 
 ## Supported foundation
 
