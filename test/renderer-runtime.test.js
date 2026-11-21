@@ -98,3 +98,20 @@ test("network policy restricts origins and unsafe methods",()=>{
 test("renderer capability profile is explicit and honest",()=>{
  const caps=getRendererCapabilities();assert.equal(caps.htmlParsing,true);assert.equal(caps.javascriptExecution,false);assert.equal(caps.cssGrid,false);
 });
+
+import { ScriptRuntime } from "../src/renderer/script-runtime.js";
+
+test("script runtime delegates execution to an explicit isolated engine adapter",async()=>{
+ const doc=parseHTML('<script>globalThis.marker = 1</script><script type="application/json">{"x":1}</script>');
+ const calls=[];
+ const engine={async createContext(options){assert.ok(options.bridge);assert.deepEqual(options.permissions,["dom:read","dom:write","events"]);return {async evaluate(source,meta){calls.push({source,meta});return "ok";},async dispose(){calls.push({disposed:true});}};}};
+ const runtime=new PolarisDocumentRuntime({document:doc});runtime.decorateTree();
+ const scripts=new ScriptRuntime({engine,documentRuntime:runtime});
+ const results=await scripts.start(doc);
+ assert.equal(results.length,1);assert.equal(calls[0].source,"globalThis.marker = 1");
+ await scripts.dispose();assert.equal(calls.at(-1).disposed,true);
+});
+test("script runtime refuses to execute without an isolated engine",async()=>{
+ const doc=parseHTML("<script>1+1</script>"),runtime=new ScriptRuntime();
+ await assert.rejects(runtime.start(doc),/isolated JavaScript engine/i);
+});
