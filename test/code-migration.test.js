@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeLegacyProject, convertLegacyProject, createMigrationPlan } from "../src/migration/code-migration.js";
+import { analyzeLegacyProject, convertLegacyProject, createMigrationPlan, getMigrationMappings } from "../src/migration/code-migration.js";
 
 test("analyser detects Scramjet and Ultraviolet references without executing source", () => {
   const result = analyzeLegacyProject({
@@ -33,4 +33,20 @@ test("migration plan identifies manual transport work", () => {
   const plan = createMigrationPlan(analysis);
   assert.equal(plan.steps.find(step => step.id === "transport").status, "required");
   assert.equal(plan.steps.find(step => step.id === "inventory").status, "done");
+});
+
+test("scanner detects legacy HTML script references and ignores non-source files in counts", () => {
+  const result = analyzeLegacyProject({
+    "index.html": '<script src="/scram/scramjet.all.js"></script>',
+    "notes.md": "ScramjetController"
+  });
+  assert.equal(result.filesScanned, 1);
+  assert.ok(result.findings.some(item => item.id === "legacy-script-reference"));
+});
+
+test("migration plan includes concrete Polaris API mapping suggestions", () => {
+  const analysis = analyzeLegacyProject({ "main.js": "new ScramjetController()" });
+  const plan = createMigrationPlan(analysis);
+  assert.ok(plan.mappings.some(item => item.polaris.includes("RuntimeManager")));
+  assert.ok(getMigrationMappings({ engine: "ultraviolet" }).length > 0);
 });
