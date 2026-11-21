@@ -1,0 +1,41 @@
+/**
+ * Worker-side protocol host for a separately bundled JavaScript engine.
+ * Supply an engineFactory backed by an isolated interpreter/WASM runtime.
+ * This protocol host itself never evals or Function-compiles page source.
+ */
+export function installPolarisScriptWorker(scope,engineFactory,options={}){
+  if(!scope?.addEventListener||!scope?.postMessage)throw new TypeError("A WorkerGlobalScope-like object is required");
+  if(!engineFactory||typeof engineFactory.createContext!=="function")throw new TypeError("engineFactory.createContext is required");
+  const contexts=new Map(),maxContexts=options.maxContexts??4,maxMessageBytes=options.maxMessageBytes??2*1024*1024;
+  let nextContext=0,closed=false;
+  const send=(message)=>scope.postMessage({channel:"polaris-script",...message});
+  const handle=async message=>{
+    if(closed||!message||message.channel!=="polaris-script")return;
+    if(JSON.stringify(message).length>maxMessageBytes){send({type:"error",id:message.id,error:"Worker message exceeds size limit"});return;}
+    try{
+      if(message.type==="create-context"){
+        if(contexts.size>=maxContexts)throw new Error("Worker context limit reached");
+        const context=await engineFactory.createContext({permissions:message.permissions??[],limits:message.limits??{}});
+        const contextId="polaris-context-"+(++nextContext);contexts.set(contextId,context);
+        send({type:"result",id:message.id,result:{contextId}});return;
+      }
+      if(message.type==="evaluate"){
+        const context=contexts.get(message.contextId);if(!context)throw new Error("Unknown script context");
+        if(typeof context.evaluate!=="function")throw new Error("Engine context does not implement evaluate");
+        const result=await context.evaluate(String(message.source??""),{filename:message.filename,timeoutMs:message.timeoutMs});
+        send({type:"result",id:message.id,result});return;
+      }
+      if(message.type==="dispose-context"){
+        const context=contexts.get(message.contextId);if(context){contexts.delete(message.contextId);await context.dispose?.();}
+        send({type:"result",id:message.id,result:{disposed:true}});return;
+      }
+      throw new Error("Unsupported worker protocol message");
+    }catch(error){send({type:"error",id:message.id,error:String(error?.message??error)});}
+  };
+  const listener=event=>{handle(event.data);};
+  scope.addEventListener("message",listener);
+  return {
+    get contextCount(){return contexts.size;},
+    async dispose(){if(closed)return;closed=true;scope.removeEventListener?.("message",listener);for(const context of contexts.values())await context.dispose?.();contexts.clear();}
+  };
+}
