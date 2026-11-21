@@ -62,3 +62,5 @@ export { PolarisScriptBridge } from "./renderer/script-bridge.js";
 export { createStyleDeclaration } from "./renderer/style-declaration.js";
 export { RendererNetworkPolicy } from "./renderer/network-policy.js";
 export { RENDERER_CAPABILITIES, getRendererCapabilities, supportsRendererFeature } from "./renderer/runtime-capabilities.js";
+
+export { ScriptRuntime } from "./renderer/script-runtime.js";
