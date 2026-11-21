@@ -35,6 +35,8 @@ export class PolarisDocumentRuntime extends EventTargetMixin {
   blur(element){if(this.activeElement!==element)return;this.activeElement=null;element._focus=false;this.document.activeElement=null;element.dispatchEvent(new PolarisEvent("blur"));}
   submit(form,submitter=null){const event=new PolarisEvent("submit",{bubbles:true,cancelable:true,detail:{submitter}});const accepted=this.dispatch(form,event);if(accepted)this.onSubmit(form,submitter);return accepted;}
   _decorateElement(el){
+    if(el.__polarisDecorated)return el;
+    el.__polarisDecorated=true;
     el.ownerDocument=this.document;
     el.addEventListener=(...args)=>EventTargetMixin.prototype.addEventListener.apply(el,args);
     el._invokeListeners=(...args)=>EventTargetMixin.prototype._invokeListeners.apply(el,args);
