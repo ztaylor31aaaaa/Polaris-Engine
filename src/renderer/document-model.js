@@ -171,11 +171,12 @@ function matchesCompound(el,selector){
   if(!(el instanceof ElementNode))return false;
   const attrMatches=[...selector.matchAll(/\[([\w-]+)\s*(?:(\^=|\$=|\*=|~=|\|=|=)\s*(?:"([^"]*)"|'([^']*)'|([^\]\s]+)))?\s*\]/g)];
   const withoutAttrs=selector.replace(/\[[^\]]+\]/g,"");
-  const tag=withoutAttrs.match(/^[a-zA-Z][\w-]*/)?.[0];
+  const selectorBase=withoutAttrs.replace(/:not\([^)]*\)/g,"");
+  const tag=selectorBase.match(/^[a-zA-Z][\w-]*/)?.[0];
   if(tag&&el.tagName!==tag.toLowerCase())return false;
   if(withoutAttrs.includes("*")&&!tag&&withoutAttrs[0]!=="*")return false;
-  for(const [,id] of withoutAttrs.matchAll(/#([\w-]+)/g))if(el.id!==id)return false;
-  for(const [,name] of withoutAttrs.matchAll(/\.([\w-]+)/g))if(!el.classList.contains(name))return false;
+  for(const [,id] of selectorBase.matchAll(/#([\w-]+)/g))if(el.id!==id)return false;
+  for(const [,name] of selectorBase.matchAll(/\.([\w-]+)/g))if(!el.classList.contains(name))return false;
   for(const [,name,operator,double,single,bare] of attrMatches){
     if(!el.hasAttribute(name))return false;
     if(!operator)continue;
