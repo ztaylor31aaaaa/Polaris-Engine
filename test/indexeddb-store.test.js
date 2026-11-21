@@ -88,9 +88,8 @@ test("request errors reject with the original request error", async () => {
 test("batch operation errors reject instead of reporting success", async () => {
   const fake = createFakeIndexedDB({ failRequest: true });
   const store = new IndexedDBStore({ indexedDB: fake });
-  // The fake store deliberately exposes only get; a malformed batch must fail
-  // synchronously while queuing its first operation.
-  await assert.rejects(store.batch([{ type: "delete", key: "one" }]), /store\.delete is not a function/);
+  // The fake store returns a failing request; batch must reject that request error.
+  await assert.rejects(store.batch([{ type: "delete", key: "one" }]), /request failed/);
 });
 
 test("version changes close the old database connection", async () => {
