@@ -13,6 +13,8 @@ test("frame compatibility facade exposes frame-shaped document and window APIs",
  assert.equal(frame.contentWindow.document.getElementById("app").textContent,"Hello");
  assert.equal(frame.contentWindow.location.origin,"https://example.test");
  assert.equal(frame.contentWindow.innerWidth,640);
+ assert.equal(frame.frame,frame.renderer.canvas);
+ assert.equal(typeof frame.go,"function");
  frame.destroy();
 });
 test("frame facade navigates through Polaris history and rejects use after destroy",()=>{
