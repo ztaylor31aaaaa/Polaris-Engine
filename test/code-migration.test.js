@@ -138,7 +138,7 @@ test("migration mappings can be filtered by confidence", () => {
 
 test("detailed migration report groups locations and produces ordered steps", () => {
   const analysis = analyzeLegacyProject({
-    "src/a.js": 'localStorage.setItem("theme", "dark");\\nlocalStorage.getItem("theme");',
+    "src/a.js": 'localStorage.setItem("theme", "dark");\nlocalStorage.getItem("theme");',
     "src/b.js": 'new ScramjetController();'
   });
   const report = createMigrationReport(analysis);
