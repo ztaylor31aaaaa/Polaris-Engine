@@ -74,7 +74,7 @@ export class StyleEngine {
       }
       for (const [property, item] of candidates) style[property] = item.value;
       expandBorders(style,candidates);
-      if (node.hasAttribute("hidden")) style.display = "none";
+      if (node.hasAttribute("hidden") || ["head","title","style","script","meta","link","base","template","noscript"].includes(node.tagName)) style.display = "none";
       if (node.hasAttribute("style")) Object.assign(node.style, Object.fromEntries(parseDeclarations(inline).map(d=>[d.property,d.value])));
       if (style.display === "inline" && BLOCK.has(node.tagName)) style.display = "block";
       if (node.tagName === "img" || node.tagName === "input" || node.tagName === "button") if (style.display === "inline") style.display = "inline-block";
