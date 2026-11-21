@@ -17,6 +17,8 @@ const INITIAL = {
 const INHERITED = new Set(["color","fontFamily","fontSize","fontWeight","fontStyle","lineHeight","textAlign","whiteSpace","visibility"]);
 const BLOCK = new Set(["html","body","div","main","section","article","header","footer","nav","aside","p","h1","h2","h3","h4","h5","h6","ul","ol","li","form","pre","blockquote","table","tr"]);
 const UA = {
+  head:{display:"none"},title:{display:"none"},style:{display:"none"},script:{display:"none"},meta:{display:"none"},link:{display:"none"},base:{display:"none"},
+  template:{display:"none"},noscript:{display:"none"},
   body:{marginTop:"8px",marginRight:"8px",marginBottom:"8px",marginLeft:"8px"},
   p:{marginTop:"16px",marginBottom:"16px"},
   h1:{fontSize:"32px",fontWeight:"700",marginTop:"21px",marginBottom:"21px"},
