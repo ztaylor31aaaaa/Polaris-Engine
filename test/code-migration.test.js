@@ -4,8 +4,8 @@ import { analyzeLegacyProject, convertLegacyProject, createMigrationPlan, getMig
 
 test("analyser detects Scramjet and Ultraviolet references without executing source", () => {
   const result = analyzeLegacyProject({
-    "src/main.js": 'import { ScramjetController } from "@mercuryworkshop/scramjet";\\nconst controller = new ScramjetController();',
-    "src/uv.js": 'importScripts("/uv/uv.bundle.js");\\nconst runtime = Ultraviolet;'
+    "src/main.js": 'import { ScramjetController } from "@mercuryworkshop/scramjet";\nconst controller = new ScramjetController();',
+    "src/uv.js": 'importScripts("/uv/uv.bundle.js");\nconst runtime = Ultraviolet;'
   });
   assert.equal(result.filesScanned, 2);
   assert.ok(result.findings.some(item => item.id === "scramjet-import"));
