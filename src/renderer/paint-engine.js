@@ -2,10 +2,11 @@ import { ElementNode,TextNode } from "./document-model.js";
 import { px } from "./style-engine.js";
 export class PaintEngine {
   constructor(options={}){this.background=options.background??"#ffffff";this.lastFrame=null;this.images=options.images??new Map();}
-  paint(document,layout,context){
+  paint(document,layout,context,viewport={}){
     if(!context)throw new TypeError("A CanvasRenderingContext2D is required");
     const canvas=context.canvas;context.clearRect(0,0,canvas?.width??layout.width,canvas?.height??layout.height);
     context.fillStyle=this.background;context.fillRect(0,0,layout.width,layout.height);
+    context.save();context.beginPath();context.rect(0,0,layout.width,layout.height);context.clip();context.translate(-(viewport.scrollX??0),-(viewport.scrollY??0));
     const drawNode=node=>{
       if(!(node instanceof ElementNode))return;
       const b=node.layout??{},s=node.computedStyle??{};
@@ -18,7 +19,7 @@ export class PaintEngine {
       context.restore();
       if(node.tagName==="img"){
         const image=this.images.get(node);
-        if(image){const w=lengthAttr(node,"width",image.width),h=lengthAttr(node,"height",image.height);context.drawImage(image.bitmap??image,b.contentX??b.x,b.contentY??b.y,w,h);}
+        if(image){const w=b.contentWidth??lengthAttr(node,"width",image.width),h=b.contentHeight??lengthAttr(node,"height",image.height);context.drawImage(image.bitmap??image,b.contentX??b.x,b.contentY??b.y,w,h);}
       }
       const fontSize=px(s.fontSize,16),lineHeight=px(s.lineHeight,fontSize*1.2),textX=b.contentX??b.x;
       let textY=(b.contentY??b.y)+fontSize;
@@ -35,6 +36,7 @@ export class PaintEngine {
       }
     };
     for(const child of document.childNodes)if(child instanceof ElementNode)drawNode(child);
+    context.restore();
     this.lastFrame={width:layout.width,height:layout.height,contentHeight:layout.contentHeight,paintedAt:Date.now()};return this.lastFrame;
   }
 }
