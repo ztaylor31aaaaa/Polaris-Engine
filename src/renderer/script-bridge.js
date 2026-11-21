@@ -9,9 +9,9 @@ export class PolarisScriptBridge {
   constructor(options={}){
     this.runtime=options.runtime??new PolarisDocumentRuntime(options);
     this.maxMessageBytes=options.maxMessageBytes??256*1024;
-    this.handlers=new Map();this.sequence=0;this.closed=false;
+    this.handlers=new Map();this.createdNodes=new Map();this.sequence=0;this.closed=false;
     this.allowedMethods=new Set(["createElement","getAttribute","setAttribute","removeAttribute","appendText","appendChild","removeChild","setTextContent","getTextContent","setStyle","querySelector","querySelectorAll","dispatchEvent"]);
-    this.handlers.set("createElement",args=>this.runtime.createElement(args.tagName).nodeId);
+    this.handlers.set("createElement",args=>{const element=this.runtime.createElement(args.tagName);this.createdNodes.set(element.nodeId,element);return element.nodeId;});
     this.handlers.set("getAttribute",args=>this._element(args.nodeId).getAttribute(args.name));
     this.handlers.set("setAttribute",args=>{this.runtime.setAttribute(this._element(args.nodeId),args.name,args.value);return true;});
     this.handlers.set("removeAttribute",args=>{this._element(args.nodeId).removeAttribute(args.name);return true;});
@@ -26,7 +26,7 @@ export class PolarisScriptBridge {
     this.handlers.set("dispatchEvent",args=>this.runtime.dispatch(this._element(args.nodeId),this.runtime.createEvent(args.type,{bubbles:Boolean(args.bubbles),cancelable:Boolean(args.cancelable)})));
   }
   register(method,handler){if(!this.allowedMethods.has(method)||typeof handler!=="function")throw new TypeError("Unsupported bridge method");this.handlers.set(method,handler);return()=>this.handlers.delete(method);}
-  _element(nodeId){for(const node of this.runtime.document.walk())if(node.nodeId===nodeId)return node;throw new Error("Unknown document node");}
+  _element(nodeId){const created=this.createdNodes.get(nodeId);if(created)return created;for(const node of this.runtime.document.walk())if(node.nodeId===nodeId)return node;throw new Error("Unknown document node");}
   async handle(message){
     if(this.closed)throw new Error("Script bridge is closed");
     const size=JSON.stringify(message??null).length;if(size>this.maxMessageBytes)throw new Error("Bridge message exceeds size limit");
