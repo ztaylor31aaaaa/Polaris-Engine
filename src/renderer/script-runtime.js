@@ -1,5 +1,5 @@
 import { ResourceLoader } from "./resource-loader.js";
-import { PolarisScriptBridge } from "./script-bridge.js";
+import { PolarisDOMBridge } from "./script-bridge-extended.js";
 import { PolarisDocumentRuntime } from "./dom-runtime.js";
 
 /**
@@ -30,7 +30,7 @@ export class ScriptRuntime {
     this.running=true;
     this.runtime=this.runtime??new PolarisDocumentRuntime({document});
     this.runtime.decorateTree();
-    this.bridge=new PolarisScriptBridge({runtime:this.runtime,maxMessageBytes:options.maxBridgeMessageBytes});
+    this.bridge=new PolarisDOMBridge({runtime:this.runtime,maxMessageBytes:options.maxBridgeMessageBytes});
     try{
       this.context=await this.engine.createContext({
         bridge:this.bridge,
