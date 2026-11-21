@@ -47,8 +47,10 @@ export class LayoutEngine {
         if(!(child instanceof ElementNode))continue;
         const childDisplay=child.computedStyle?.display??"inline";
         if(isFlex){
-          const childBox=layoutNode(child,0,0,contentWidth,availableHeight,false);
-          flexItems.push({node:child,width:childBox.width,height:childBox.height});
+          const childStyle=child.computedStyle??{};
+          const minItemWidth=length(childStyle.minWidth,contentWidth,0);
+          const basis=length(childStyle.flexBasis,contentWidth,null)??length(childStyle.width,contentWidth,null);
+          flexItems.push({node:child,minWidth:minItemWidth,basis:basis??0,height:line});
         }else if(childDisplay==="inline"||childDisplay==="inline-block"){
           const childBox=layoutNode(child,cursorX,cursorY,Math.max(0,contentX+contentWidth-cursorX),availableHeight);
           cursorX+=childBox.width;lineHeight=Math.max(lineHeight,childBox.height);
@@ -60,6 +62,18 @@ export class LayoutEngine {
         }
       }
       if(isFlex){
+        if(!column){
+          const availableForItems=Math.max(0,contentWidth-gap*Math.max(0,flexItems.length-1));
+          const flexible=flexItems.filter(item=>item.node instanceof ElementNode&&String(item.node.computedStyle?.flex??"").trim().startsWith("1"));
+          const fixed=flexItems.reduce((sum,item)=>sum+(item.basis||item.minWidth||0),0);
+          const share=flexible.length?Math.max(0,(availableForItems-fixed)/flexible.length):availableForItems/Math.max(1,flexItems.length);
+          for(const item of flexItems){
+            const hasFlex=String(item.node?.computedStyle?.flex??"").trim().startsWith("1");
+            item.width=Math.max(item.minWidth,hasFlex?share:(item.basis||share));
+            const childBox=layoutNode(item.node,0,0,item.width,availableHeight,false);
+            item.width=childBox.width;item.height=childBox.height;
+          }
+        }
         const totalMain=flexItems.reduce((sum,item)=>sum+(column?item.height:item.width),0)+Math.max(0,flexItems.length-1)*gap;
         const free=Math.max(0,(column?availableHeight:contentWidth)-totalMain);
         let offset=0,between=gap;
