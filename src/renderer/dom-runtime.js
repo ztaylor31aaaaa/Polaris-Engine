@@ -16,7 +16,7 @@ export class PolarisDocumentRuntime extends EventTargetMixin {
     doc.activeElement=this.activeElement;
     doc.addEventListener=(...args)=>EventTargetMixin.prototype.addEventListener.apply(doc,args);
     doc.removeEventListener=(...args)=>EventTargetMixin.prototype.removeEventListener.apply(doc,args);
-    doc.dispatchEvent=event=>dispatchPolarisEvent(doc,event);
+    doc._invokeListeners=(...args)=>EventTargetMixin.prototype._invokeListeners.apply(doc,args);\n    doc.dispatchEvent=event=>dispatchPolarisEvent(doc,event);
     doc.defaultView=this.window;
   }
   createElement(tag){const el=new ElementNode(tag);this._decorateElement(el);return el;}
@@ -71,7 +71,7 @@ export class PolarisDocumentRuntime extends EventTargetMixin {
 export class PolarisMutationObserver {
   constructor(callback){if(typeof callback!=="function")throw new TypeError("MutationObserver callback must be a function");this.callback=callback;this.records=[];this.disconnectors=[];this.scheduled=false;}
   observe(runtime,target,options={}){if(!(runtime instanceof PolarisDocumentRuntime))throw new TypeError("Use a PolarisDocumentRuntime");const disconnect=runtime.observe(this);this.disconnectors.push(disconnect);this.options=options;this.target=target;}
-  _enqueue(record){if(record.target!==this.target&&!this.options?.subtree)return;if(record.type==="attributes"&&!this.options?.attributes)return;if(record.type==="childList"&&!this.options?.childList)return;if(record.type==="characterData"&&!this.options?.characterData)return;this.records.push(record);if(!this.scheduled){this.scheduled=true;queueMicrotask(()=>{this.scheduled=false;const records=this.takeRecords();if(records.length)this.callback(records,this);});}}
+  _enqueue(record){if(record.target!==this.target&&(!this.options?.subtree||!this.target?.contains?.(record.target)))return;if(record.type==="attributes"&&!this.options?.attributes)return;if(record.type==="childList"&&!this.options?.childList)return;if(record.type==="characterData"&&!this.options?.characterData)return;this.records.push(record);if(!this.scheduled){this.scheduled=true;queueMicrotask(()=>{this.scheduled=false;const records=this.takeRecords();if(records.length)this.callback(records,this);});}}
   takeRecords(){const records=this.records;this.records=[];return records;}
   disconnect(){for(const fn of this.disconnectors)fn();this.disconnectors=[];this.records=[];}
 }
