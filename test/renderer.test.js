@@ -149,3 +149,12 @@ test("HTML parser implicitly closes paragraphs and list items",()=>{
  assert.equal(paragraphs.length,2);assert.equal(paragraphs[0].textContent,"One");
  assert.equal(paragraphs[1].textContent,"Two");assert.equal(items.length,2);
 });
+test("paint engine applies device pixel ratio while retaining CSS-pixel coordinates",()=>{
+ const calls=[];
+ const context={canvas:{width:640,height:400},setTransform(...args){calls.push(["transform",...args]);},clearRect(){calls.push(["clear"]);},fillRect(){},save(){},restore(){},beginPath(){},rect(){},clip(){},translate(){},fillText(){}};
+ const doc=parseHTML("<main><p>HiDPI</p></main>");const styles=new StyleEngine();styles.compute(doc);
+ const layout=new LayoutEngine().layout(doc,{width:320,height:200});
+ new PaintEngine().paint(doc,layout,context,{scrollX:0,scrollY:0,devicePixelRatio:2});
+ assert.deepEqual(calls.find(call=>call[0]==="transform"),["transform",2,0,0,2,0,0]);
+ assert.ok(calls.some(call=>call[0]==="clear"));
+});
