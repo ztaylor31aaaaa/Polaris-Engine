@@ -9,6 +9,7 @@ import { PolarisHistory } from "./history-runtime.js";
 import { ImageResourceLoader } from "./image-loader.js";
 import { RendererViewport } from "./viewport.js";
 import { buildAccessibilityTree } from "./accessibility.js";
+import { ScriptRuntime } from "./script-runtime.js";
 
 export class PolarisRenderer {
   constructor(options={}){
@@ -19,6 +20,7 @@ export class PolarisRenderer {
     this.layoutEngine=options.layoutEngine??new LayoutEngine({measureText:(text,size,font)=>{if(this.context){this.context.save();this.context.font=`${size}px ${font??"Arial"}`;const width=this.context.measureText(String(text)).width;this.context.restore();return width;}return String(text).length*size*.52;}});
     this.painter=options.paintEngine??new PaintEngine(options);this.resourceLoader=options.resourceLoader??new ResourceLoader(options.resources);
     this.imageLoader=options.imageLoader??new ImageResourceLoader({resourceLoader:this.resourceLoader});this.images=new Map();
+    this.scriptRuntime=options.scriptRuntime??null;
     this.runtime=null;this.document=null;this.history=new PolarisHistory({onChange:entry=>{if(entry)this.loadURL(entry.url,{history:false}).catch(this.onError);}});
     this.onNavigate=options.onNavigate??null;this.onError=options.onError??(()=>{});
     this._clickHandler=e=>this._handlePointer(e,"click");this._pointerHandler=e=>this._handlePointer(e,"pointerdown");
@@ -40,13 +42,14 @@ export class PolarisRenderer {
     const links=this.document.querySelectorAll("link").filter(link=>(link.getAttribute("rel")??"").toLowerCase().split(/\s+/).includes("stylesheet")&&link.getAttribute("href"));
     const settled=await Promise.allSettled(links.map(link=>this.resourceLoader.fetchText(link.getAttribute("href"),{baseURL:result.url,signal:options.signal,credentials:options.credentials})));
     for(let i=0;i<settled.length;i++){const item=settled[i];if(item.status==="fulfilled")this.styles.addStylesheet(item.value.text);else this.onError(item.reason);}
-    this.styles.compute(this.document);await this._loadImages(options);return this.render();
+    this.styles.compute(this.document);await this._loadImages(options);if(this.scriptRuntime&&options.executeScripts!==false)await this.startScripts(options);return this.render();
   }
   async _loadImages(options={}){
     this.images.clear();const images=this.document.querySelectorAll("img").filter(el=>el.getAttribute("src"));
     await Promise.allSettled(images.map(async el=>{const result=await this.imageLoader.load(el.getAttribute("src"),{baseURL:this.document.url,signal:options.signal,credentials:options.credentials});this.images.set(el,result);}));
     this.painter.images=this.images;
   }
+  async startScripts(options={}){if(!this.scriptRuntime)throw new Error("No isolated ScriptRuntime has been configured");return this.scriptRuntime.start(this.document,options);}
   async _submitForm(form){try{const {encodeFormData}=await import("./forms.js");const request=encodeFormData(form,form.getAttribute("method")??"GET");this.navigate(request.url);}catch(error){this.onError(error);}}
   navigate(url,options={}){
     const resolved=this.resourceLoader.resolve(url,this.document?.url??"about:blank");
@@ -78,6 +81,6 @@ export class PolarisRenderer {
     try{this.styles.compute(this.document);const layout=this.layoutEngine.layout(this.document,this.viewport);this.painter.images=this.images;return this.painter.paint(this.document,layout,this.context);}
     catch(error){this.onError(error);throw error;}
   }
-  destroy(){this.canvas?.removeEventListener?.("click",this._clickHandler);this.canvas?.removeEventListener?.("pointerdown",this._pointerHandler);this.imageLoader.clear();this.runtime=null;this.document=null;this.context=null;this.canvas=null;}
+  destroy(){this.canvas?.removeEventListener?.("click",this._clickHandler);this.canvas?.removeEventListener?.("pointerdown",this._pointerHandler);this.imageLoader.clear();this.scriptRuntime?.dispose?.();this.runtime=null;this.document=null;this.context=null;this.canvas=null;}
 }
 function findAncestor(node,tag){for(let current=node;current;current=current.parentNode)if(current instanceof ElementNode&&current.tagName===tag)return current;return null;}
