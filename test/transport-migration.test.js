@@ -104,3 +104,12 @@ test("bookmark HTML export can be imported again", () => {
   assert.equal(preview.data.bookmarks[0].title, "A & B");
   assert.equal(preview.data.bookmarks[0].url, "https://example.com/?x=1&y=2");
 });
+
+test("bookmark HTML migration preserves nested folder paths", () => {
+  const html = '<DL><DT><H3>Bar</H3><DL><DT><H3>Work</H3><DL><DT><A HREF="https://example.com">Docs</A></DL></DL></DL>';
+  const preview = inspectMigration(html);
+  assert.equal(preview.data.bookmarks[0].folder, "Bar/Work");
+  const exported = exportBookmarksHtml(preview.data.bookmarks);
+  const roundTrip = inspectMigration(exported);
+  assert.equal(roundTrip.data.bookmarks[0].folder, "Bar/Work");
+});
