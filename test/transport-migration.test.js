@@ -71,3 +71,28 @@ test("settings manager validates and persists transport preferences", () => {
   assert.equal(settings.get("transportConnectTimeout"), 5000);
   assert.throws(() => settings.set("transportConnectTimeout", 10), /between 1000 and 120000/);
 });
+
+test("replace migration leaves categories absent from the import untouched", () => {
+  const preview = inspectMigration({ bookmarks: [{ title: "New", url: "https://new.example" }] });
+  const result = applyMigration(preview, {
+    bookmarks: [{ title: "Old", url: "https://old.example" }],
+    history: [{ title: "History", url: "https://history.example" }],
+    tabs: [{ title: "Existing tab", url: "https://tab.example" }],
+    settings: { theme: "dark" },
+    mode: "replace"
+  });
+  assert.equal(result.bookmarks.length, 1);
+  assert.equal(result.bookmarks[0].url, "https://new.example/");
+  assert.equal(result.history[0].url, "https://history.example");
+  assert.equal(result.tabs[0].url, "https://tab.example");
+  assert.equal(result.settings.theme, "dark");
+});
+
+test("history merge preserves separate visits to the same URL", () => {
+  const preview = inspectMigration({ history: [
+    { url: "https://example.com", visitedAt: "2026-01-01T00:00:00Z" },
+    { url: "https://example.com", visitedAt: "2026-01-02T00:00:00Z" }
+  ] });
+  const result = applyMigration(preview, { history: [{ url: "https://example.com", visitedAt: "2025-12-31T00:00:00Z" }] });
+  assert.equal(result.history.length, 3);
+});
