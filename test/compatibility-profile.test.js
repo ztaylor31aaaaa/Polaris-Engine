@@ -3,11 +3,13 @@ import assert from "node:assert/strict";
 import { createFeatureProfile, createBrowserSurface, CompatibilityError } from "../src/index.js";
 
 test("feature profile reports native capabilities without patching globals", () => {
-  const fake = { fetch() {}, URL: class URL {}, navigator: { serviceWorker: { register() {} } } };
+  const fake = { fetch() {}, URL: class URL {}, AbortController: class AbortController {}, navigator: { serviceWorker: { register() {} }, gpu: {} } };
   const profile = createFeatureProfile({ globalObject: fake });
   assert.equal(profile.supports("fetch"), true);
   assert.equal(profile.supports("URL"), true);
   assert.equal(profile.supports("serviceWorker"), true);
+  assert.equal(profile.supports("AbortController"), true);
+  assert.equal(profile.supports("WebGPU"), true);
   assert.equal(profile.supports("WebSocket"), false);
   assert.throws(() => profile.require(["fetch", "WebSocket"]), CompatibilityError);
   const surface = createBrowserSurface({ globalObject: fake, profile });
