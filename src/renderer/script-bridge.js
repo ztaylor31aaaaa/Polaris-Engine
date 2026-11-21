@@ -39,6 +39,8 @@ export class PolarisScriptBridge {
   }
   register(method,handler){if(!this.allowedMethods.has(method)||typeof handler!=="function")throw new TypeError("Unsupported bridge method");this.handlers.set(method,handler);return()=>this.handlers.delete(method);}
   _element(nodeId){const created=this.createdNodes.get(nodeId);if(created)return created;for(const node of this.runtime.document.walk())if(node.nodeId===nodeId)return node;throw new Error("Unknown document node");}
+  _rememberNode(node){this.createdNodes.set(node.nodeId,node);return node.nodeId;}
+  _resolveNode(nodeId){return this._element(nodeId);}
   async handle(message){
     if(this.closed)throw new Error("Script bridge is closed");
     const size=JSON.stringify(message??null).length;if(size>this.maxMessageBytes)throw new Error("Bridge message exceeds size limit");
