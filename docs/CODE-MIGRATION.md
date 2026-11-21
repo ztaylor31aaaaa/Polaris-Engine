@@ -93,13 +93,36 @@ await runtime.start();
 
 Check the constructor and lifecycle contracts in the API documentation for the installed Engine version before using this example in production.
 
-## 4. Transport and service workers
+## 4. Reduce application changes with the migration facade
+
+For applications that currently expect a controller with `init`, `open`, `navigate`, `close` and frame/status access, Polaris provides a small opt-in facade:
+
+```js
+import {
+  TabManager,
+  ViewAdapter,
+  RuntimeManager,
+  createLegacyMigrationFacade
+} from "@polaris/engine";
+
+const tabs = new TabManager();
+const views = new ViewAdapter({ container: document.querySelector("#views") });
+const runtimes = new RuntimeManager();
+
+const legacyController = createLegacyMigrationFacade({ tabs, views, runtimes });
+await legacyController.init();
+await legacyController.open("https://example.com");
+```
+
+The facade manages tabs it creates, mounts normal HTTP(S) views, and cleans up their runtimes when closed. It is a lifecycle adapter only: it does not implement Scramjet/Ultraviolet URL rewriting, proxy networking or undocumented methods. Applications must still port those responsibilities explicitly.
+
+## 5. Transport and service workers
 
 Legacy BareMux, Epoxy, proxy-worker or runtime-specific transport references require a separate architecture decision. Use native browser networking where it meets the application's needs, or register a transport provider that is explicitly authorised for the environment. Polaris does not include traffic disguise, network-filter bypass or an automatic replacement proxy.
 
 Review service workers separately. Do not copy a legacy proxy worker into the Polaris application and assume that it is a general-purpose worker.
 
-## 5. Validate the port
+## 6. Validate the port
 
 At minimum, test:
 - Startup, shutdown and error recovery.
