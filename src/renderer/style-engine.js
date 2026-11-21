@@ -23,7 +23,8 @@ function expandBox(style, base) {
   for (const [side,v] of [["Top",a],["Right",b],["Bottom",c],["Left",d]]) if (style[base+side] === undefined) style[base+side] = v;
 }
 export class StyleEngine {
-  constructor() { this.rules = []; this.viewport = { width:1024, height:768, colorScheme:"light" }; }\n  setViewport(viewport = {}) { this.viewport = { ...this.viewport, ...viewport }; return this; }
+  constructor() { this.rules = []; this.viewport = { width:1024, height:768, colorScheme:"light" }; }
+  setViewport(viewport = {}) { this.viewport = { ...this.viewport, ...viewport }; return this; }
   addStylesheet(css) { this.rules.push(...parseCSS(css)); return this.rules.length; }
   clearStylesheets() { this.rules = []; }
   compute(document) {
