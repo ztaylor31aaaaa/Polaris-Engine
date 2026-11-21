@@ -72,17 +72,32 @@ export class HTMLParser {
     }
     if (steps >= (options.maxTokens ?? 250000)) throw new Error("HTML token limit exceeded");
     if (!doc.documentElement) {
-      const htmlEl = new ElementNode("html"), body = new ElementNode("body");
-      while (doc.firstChild) htmlEl.appendChild(doc.firstChild);
-      htmlEl.appendChild(body); doc.appendChild(htmlEl); doc.documentElement = htmlEl; doc.body = body;
-    } else if (!doc.body) {
-      const body = new ElementNode("body");
-      doc.documentElement.appendChild(body); doc.body = body;
-    }
-    if (!doc.head) {
-      const head = new ElementNode("head");
-      doc.documentElement.insertBefore(head, doc.body);
-      doc.head = head;
+      const htmlElement = new ElementNode("html");
+      const headElement = doc.head ?? new ElementNode("head");
+      const bodyElement = doc.body ?? new ElementNode("body");
+      const originalChildren = [...doc.childNodes];
+      for (const child of originalChildren) {
+        if (child === headElement || child === bodyElement) continue;
+        const target = ["base","link","meta","title","style"].includes(child.tagName) ? headElement : bodyElement;
+        target.appendChild(child);
+      }
+      htmlElement.appendChild(headElement);
+      htmlElement.appendChild(bodyElement);
+      doc.appendChild(htmlElement);
+      doc.documentElement = htmlElement;
+      doc.head = headElement;
+      doc.body = bodyElement;
+    } else {
+      if (!doc.head) {
+        const head = new ElementNode("head");
+        doc.documentElement.insertBefore(head, doc.documentElement.firstChild);
+        doc.head = head;
+      }
+      if (!doc.body) {
+        const body = new ElementNode("body");
+        doc.documentElement.appendChild(body);
+        doc.body = body;
+      }
     }
     return doc;
   }
