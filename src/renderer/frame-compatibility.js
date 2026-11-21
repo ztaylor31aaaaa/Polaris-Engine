@@ -8,6 +8,7 @@ import { PolarisRenderer } from "./renderer.js";
 export class PolarisFrameCompatibility {
   constructor(options={}) {
     this.renderer=options.renderer??new PolarisRenderer(options);
+    this.frame=this.renderer.canvas??null;
     this.listeners=new Map();this.closed=false;this._url="about:blank";
     this.documentFacade=this._createDocumentFacade();
     this.location=this._createLocationFacade();
@@ -21,6 +22,11 @@ export class PolarisFrameCompatibility {
   get contentDocument(){return this.documentFacade}
   get url(){return this._url}
   async load(url,options={}){this._assertOpen();const result=await this.renderer.loadURL(url,options);this._url=this.renderer.document?.url??String(url);this._emit("load",{url:this._url});return result;}
+  async go(url,options={}){return this.load(url,options);}
+  reload(options={}){this._assertOpen();if(!this._url||this._url==="about:blank")return Promise.resolve(null);return this.load(this._url,{...options,replace:true});}
+  focus(){this.frame?.focus?.();}
+  blur(){this.frame?.blur?.();}
+  getBoundingClientRect(){return this.frame?.getBoundingClientRect?.()??{x:0,y:0,width:this.renderer.viewport.width,height:this.renderer.viewport.height,top:0,left:0,right:this.renderer.viewport.width,bottom:this.renderer.viewport.height};}
   setHTML(html,options={}){this._assertOpen();const result=this.renderer.setHTML(html,{url:options.url??"polaris:document"});this._url=this.renderer.document?.url??this._url;this._emit("load",{url:this._url});return result;}
   navigate(url,options={}){this._assertOpen();const resolved=this.renderer.navigate(url,options);this._url=resolved;this._emit("navigate",{url:resolved});return resolved;}
   resize(width,height,dpr){this._assertOpen();return this.renderer.resize(width,height,dpr);}
@@ -83,3 +89,5 @@ export class PolarisFrameCompatibility {
   _assertOpen(){if(this.closed)throw new Error("Polaris frame compatibility instance is destroyed");}
   destroy(){if(this.closed)return;this.closed=true;this.renderer.destroy();this.listeners.clear();}
 }
+
+export function createPolarisFrame(options={}){return new PolarisFrameCompatibility(options);}
