@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { TransportProviderManager, SettingsManager, inspectMigration, applyMigration, exportPortableData } from "../src/index.js";
+import { TransportProviderManager, SettingsManager, inspectMigration, applyMigration, exportPortableData, exportBookmarksHtml } from "../src/index.js";
 
 test("transport provider requires explicit enable and selection", async () => {
   let initialised = 0;
@@ -95,4 +95,12 @@ test("history merge preserves separate visits to the same URL", () => {
   ] });
   const result = applyMigration(preview, { history: [{ url: "https://example.com", visitedAt: "2025-12-31T00:00:00Z" }] });
   assert.equal(result.history.length, 3);
+});
+
+test("bookmark HTML export can be imported again", () => {
+  const html = exportBookmarksHtml([{ title: "A & B", url: "https://example.com/?x=1&y=2" }]);
+  const preview = inspectMigration(html);
+  assert.equal(preview.counts.bookmarks, 1);
+  assert.equal(preview.data.bookmarks[0].title, "A & B");
+  assert.equal(preview.data.bookmarks[0].url, "https://example.com/?x=1&y=2");
 });
