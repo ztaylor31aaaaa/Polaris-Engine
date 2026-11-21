@@ -55,6 +55,20 @@ export class PolarisNode {
     return list[i - 1] ?? null;
   }
   get parentElement() { return this.parentNode instanceof ElementNode ? this.parentNode : null; }
+  get isConnected() { for(let node=this;node;node=node.parentNode)if(node.nodeType===9)return true;return false; }
+  remove() { this.parentNode?.removeChild(this); }
+  before(...nodes) { if(!this.parentNode)return;for(const node of nodes)this.parentNode.insertBefore(typeof node==="string"?new TextNode(node):node,this); }
+  after(...nodes) { if(!this.parentNode)return;let ref=this.nextSibling;for(const node of nodes)this.parentNode.insertBefore(typeof node==="string"?new TextNode(node):node,ref); }
+  replaceWith(...nodes) { if(!this.parentNode)return;const parent=this.parentNode;for(const node of nodes)parent.insertBefore(typeof node==="string"?new TextNode(node):node,this);parent.removeChild(this); }
+  cloneNode(deep=false) {
+    let clone;
+    if(this instanceof ElementNode)clone=new ElementNode(this.tagName,Object.fromEntries(this.attributes));
+    else if(this instanceof TextNode)clone=new TextNode(this.data);
+    else if(this instanceof CommentNode)clone=new CommentNode(this.data);
+    else clone=new PolarisNode(this.nodeType,this.nodeName);
+    if(deep)for(const child of this.childNodes)clone.appendChild(child.cloneNode(true));
+    return clone;
+  }
   get textContent() {
     if (this.nodeType === 3 || this.nodeType === 8) return this.data;
     return this.childNodes.map(node => node.textContent).join("");
