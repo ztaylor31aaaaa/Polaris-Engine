@@ -8,7 +8,7 @@ Polaris Engine is a modular browser-runtime framework for Polaris. Version 0.6 a
 - **Tabs and sessions:** tab lifecycle, pinning, groups, closed-tab recovery and session serialisation.
 - **Runtime:** per-tab runtime lifecycle, resource disposal, abort scopes and runtime limits.
 - **Document views:** HTTP(S) iframe mounting and cleanup through an adapter.
-- **Platform APIs:** browser feature detection, native Web Worker lifecycle, MessagePort RPC and expanded browser capability catalogue.
+- **Platform APIs:** browser feature detection, native Fetch adapter with cancellation/timeouts/events, native Web Worker lifecycle, MessagePort RPC and expanded browser capability catalogue.
 - **Frames:** iframe lifecycle controller, sandbox defaults, explicit-origin messaging and frame events.
 - **Plugins:** dependency-aware plugin activation, shutdown ordering and cleanup.
 - **URL watching:** detects history, hash and page lifecycle URL changes.
@@ -41,4 +41,4 @@ npm test
 
 Polaris Engine is not a complete browser engine and does not yet have full Scramjet or Ultraviolet feature parity. The code migration toolkit is a static analyser and controlled codemod foundation, not a universal one-click converter. Runtime APIs differ between legacy versions and applications, so developers must review the generated migration plan and test each port. The view adapter uses normal browser iframe behaviour and is subject to browser security and framing policies. Platform APIs wrap native browser functionality rather than attempting to emulate every browser implementation detail.
 
-See [docs/ROADMAP.md](docs/ROADMAP.md), [docs/TRANSPORT.md](docs/TRANSPORT.md), [docs/MIGRATION.md](docs/MIGRATION.md), [docs/CODE-MIGRATION.md](docs/CODE-MIGRATION.md) and [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
+See [docs/ROADMAP.md](docs/ROADMAP.md), [docs/TRANSPORT.md](docs/TRANSPORT.md), [docs/MIGRATION.md](docs/MIGRATION.md), [docs/CODE-MIGRATION.md](docs/CODE-MIGRATION.md) and [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) and [docs/FETCH-ADAPTER.md](docs/FETCH-ADAPTER.md).
