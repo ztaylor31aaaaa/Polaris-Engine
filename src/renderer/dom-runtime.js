@@ -39,6 +39,7 @@ export class PolarisDocumentRuntime extends EventTargetMixin {
     if(el.__polarisDecorated)return el;
     el.__polarisDecorated=true;
     el.ownerDocument=this.document;
+    const runtime=this;
     el.addEventListener=(...args)=>EventTargetMixin.prototype.addEventListener.apply(el,args);
     el._invokeListeners=(...args)=>EventTargetMixin.prototype._invokeListeners.apply(el,args);
     el.removeEventListener=(...args)=>EventTargetMixin.prototype.removeEventListener.apply(el,args);
