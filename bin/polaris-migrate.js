@@ -1,13 +1,22 @@
 #!/usr/bin/env node
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { analyzeLegacyProject, createMigrationPlan } from "../src/migration/code-migration.js";
+import { analyzeLegacyProject, createMigrationReport, renderMigrationReport } from "../src/migration/code-migration.js";
 
 const args = process.argv.slice(2);
 const outputFlag = args.indexOf("--out");
-const positional = args.filter((arg, index) => !arg.startsWith("--") && index !== outputFlag + 1);
+const formatFlag = args.indexOf("--format");
+const positional = args.filter((arg, index) =>
+  !arg.startsWith("--") &&
+  index !== outputFlag + 1 &&
+  index !== formatFlag + 1
+);
 const root = path.resolve(positional[0] || ".");
-const outputPath = outputFlag >= 0 ? path.resolve(args[outputFlag + 1] || "polaris-migration-plan.json") : null;
+const format = formatFlag >= 0 ? args[formatFlag + 1] : "json";
+if (!["json", "markdown", "md"].includes(format)) throw new Error("Format must be json or markdown.");
+const outputPath = outputFlag >= 0
+  ? path.resolve(args[outputFlag + 1] || (format === "json" ? "polaris-migration-plan.json" : "polaris-migration-report.md"))
+  : null;
 const extensions = new Set([".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".html", ".json"]);
 const ignored = new Set(["node_modules", ".git", "dist", "build", ".next", ".cache"]);
 const sourceFiles = {};
@@ -28,12 +37,12 @@ async function walk(directory) {
 try {
   await walk(root);
   const analysis = analyzeLegacyProject(sourceFiles);
-  const plan = createMigrationPlan(analysis);
-  const report = { ...plan, filesScanned: analysis.filesScanned, filesWithFindings: analysis.filesWithFindings, summary: analysis.summary };
-  console.log(JSON.stringify(report, null, 2));
+  const report = createMigrationReport(analysis);
+  const output = format === "json" ? JSON.stringify(report, null, 2) : renderMigrationReport(report);
+  console.log(output);
   if (outputPath) {
-    await writeFile(outputPath, JSON.stringify(report, null, 2) + "\n", "utf8");
-    console.error("Migration plan saved to " + outputPath);
+    await writeFile(outputPath, output + "\n", "utf8");
+    console.error("Migration report saved to " + outputPath);
   }
   if (analysis.findings.length) process.exitCode = 2;
 } catch (error) {
