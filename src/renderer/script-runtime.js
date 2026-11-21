@@ -1,5 +1,6 @@
 import { ResourceLoader } from "./resource-loader.js";
 import { PolarisScriptBridge } from "./script-bridge.js";
+import { PolarisDocumentRuntime } from "./dom-runtime.js";
 
 /**
  * Runs page scripts only through a host-provided isolated engine adapter.
@@ -27,7 +28,9 @@ export class ScriptRuntime {
     if(!document)throw new Error("A Polaris document is required");
     if(this.running)throw new Error("ScriptRuntime is already running");
     this.running=true;
-    this.bridge=new PolarisScriptBridge({runtime:this.runtime??undefined,maxMessageBytes:options.maxBridgeMessageBytes});
+    this.runtime=this.runtime??new PolarisDocumentRuntime({document});
+    this.runtime.decorateTree();
+    this.bridge=new PolarisScriptBridge({runtime:this.runtime,maxMessageBytes:options.maxBridgeMessageBytes});
     try{
       this.context=await this.engine.createContext({
         bridge:this.bridge,
