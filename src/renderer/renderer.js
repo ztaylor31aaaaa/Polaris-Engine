@@ -28,7 +28,7 @@ export class PolarisRenderer {
     this.viewportState.onChange(state=>{this.viewport={width:state.width,height:state.height};this.styles.setViewport(this.viewport);this.render();});
   }
   _installDocument(html,options={}){
-    this.document=this.parser.parse(html,options);this.runtime=new PolarisDocumentRuntime({document:this.document,onNavigate:(url,navOptions)=>this.navigate(url,navOptions),onSubmit:(form)=>this._submitForm(form)});
+    this.document=this.parser.parse(html,options);this.runtime=new PolarisDocumentRuntime({document:this.document,parser:this.parser,onNavigate:(url,navOptions)=>this.navigate(url,navOptions),onSubmit:(form)=>this._submitForm(form)});
     this.runtime.decorateTree();if(this.scriptRuntime)this.scriptRuntime.runtime=this.runtime;this.runtime.viewport=this.viewport;this.styles.setViewport(this.viewport);this.styles.clearStylesheets();
     for(const style of this.document.querySelectorAll("style"))this.styles.addStylesheet(style.textContent);
     this.history._navigate(this.document.url,null,options.replaceHistory??true);
