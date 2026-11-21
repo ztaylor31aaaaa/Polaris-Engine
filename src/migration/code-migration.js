@@ -5,6 +5,7 @@ const LEGACY_PATTERNS = [
   { id: "ultraviolet-class", engine: "ultraviolet", severity: "manual", pattern: /\bUltraviolet\b|\bUVConfig\b/g, message: "Ultraviolet runtime/configuration usage found.", suggestion: "Map the configuration fields explicitly; there is no universal one-to-one runtime API." },
   { id: "bare-mux", engine: "transport", severity: "manual", pattern: /\bBareMux\b|\bBareClient\b|\bEpoxy\b/g, message: "Legacy transport dependency found.", suggestion: "Remove the legacy transport dependency and use an explicitly authorised Polaris transport provider, or native browser APIs." },
   { id: "service-worker-import", engine: "service-worker", severity: "review", pattern: /importScripts\s*\([^)]*(?:scramjet|uv|bare)/gi, message: "Legacy runtime code is imported by a service worker.", suggestion: "Review and replace the worker architecture. Polaris does not silently install a proxy worker." },
+  { id: "legacy-script-reference", engine: "runtime", severity: "convertible", pattern: /(?:src|href)\s*=\s*["'][^"']*(?:scramjet|uv\.bundle|baremux)[^"']*["']|["'][^"']*(?:scramjet\.all|uv\.bundle|bare\.client)[^"']*["']/gi, message: "A legacy runtime script or asset reference was found.", suggestion: "Remove the legacy asset reference after porting its application responsibilities to Polaris modules." },
   { id: "global-rewrite", engine: "runtime", severity: "review", pattern: /\b(location\.href|window\.location|fetch\s*\()/g, message: "Direct browser navigation or Fetch usage found.", suggestion: "Review whether native navigation/fetch or a Polaris adapter is appropriate; these calls are not automatically rewritten." }
 ];
 
@@ -35,7 +36,7 @@ export function analyzeLegacyProject(files) {
   }
   const engines = [...new Set(findings.map(item => item.engine === "transport" ? "legacy-transport" : item.engine))];
   return {
-    schema: 1, filesScanned: Object.keys(fileMap).length,
+    schema: 1, filesScanned: supportedFiles.length,
     filesWithFindings: new Set(findings.map(item => item.path)).size,
     detectedEngines: engines, findings,
     summary: {
@@ -88,4 +89,18 @@ export function createMigrationPlan(analysis) {
     ],
     findings: analysis.findings
   };
+}
+
+const MIGRATION_MAPPINGS = Object.freeze([
+  { legacy: "ScramjetController / Ultraviolet runtime startup", polaris: ["RuntimeManager", "TabRuntime", "TabManager"], notes: "Rebuild startup and disposal around explicit Polaris runtime lifecycle." },
+  { legacy: "Scramjet or Ultraviolet URL handling", polaris: ["NavigationController", "UrlWatcher", "resolveAddress"], notes: "Use native HTTP(S) URL handling; do not assume old URL rewriting semantics are interchangeable." },
+  { legacy: "Legacy proxied iframe/view lifecycle", polaris: ["ViewAdapter", "FrameController"], notes: "Review sandbox flags, origin checks and messaging. Polaris does not rewrite network traffic." },
+  { legacy: "Legacy BareMux / Epoxy transport", polaris: ["TransportProviderManager"], notes: "Only register a provider authorised for the deployment; native Fetch/WebSocket are separate browser APIs." },
+  { legacy: "Legacy runtime service worker", polaris: ["WorkerManager", "MessageRPC"], notes: "Port worker tasks and messaging independently; do not carry over proxy worker code." },
+  { legacy: "Runtime browser API feature checks", polaris: ["createFeatureProfile", "createBrowserSurface"], notes: "Gate optional APIs by feature detection and provide application-level fallbacks." }
+]);
+
+export function getMigrationMappings({ engine = "all" } = {}) {
+  const mappings = MIGRATION_MAPPINGS.filter(item => engine === "all" || item.legacy.toLowerCase().includes(String(engine).toLowerCase()));
+  return mappings.map(item => ({ ...item, polaris: [...item.polaris] }));
 }
