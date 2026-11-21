@@ -13,6 +13,6 @@ export function collectFormData(form){
 }
 export function encodeFormData(form,method="GET"){
   const entries=collectFormData(form),params=new URLSearchParams(entries),normalized=String(method).toUpperCase();
-  if(normalized==="GET"){const action=form.getAttribute("action")??"";const url=new URL(action,form.ownerDocument?.url??"https://polaris.invalid/");for(const [k,v] of params)url.searchParams.append(k,v);return {method:"GET",url:url.href,body:null,contentType:null};}
+  if(normalized==="GET"){const action=form.getAttribute("action")??"";let base=form.ownerDocument?.url??"https://polaris.invalid/";try{const parsed=new URL(base);if(!["http:","https:"].includes(parsed.protocol))base="https://polaris.invalid/";}catch{base="https://polaris.invalid/";}const url=new URL(action,base);for(const [k,v] of params)url.searchParams.append(k,v);return {method:"GET",url:url.href,body:null,contentType:null};}
   return {method:normalized,url:form.getAttribute("action")??"",body:params.toString(),contentType:"application/x-www-form-urlencoded;charset=UTF-8"};
 }
