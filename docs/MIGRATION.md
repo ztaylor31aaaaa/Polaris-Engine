@@ -9,11 +9,13 @@ Polaris Engine 0.5.0 includes a portable JSON migration format and a preview-fir
 - Open-tab URLs, titles, pinned state and group labels
 - A limited allowlist of non-sensitive display and browser preferences
 
-The importer accepts Polaris portable JSON, Netscape bookmark HTML exports, Chrome-style bookmark JSON trees, and common JSON arrays named `bookmarks`, `favorites`, `history`, `visits`, `tabs`, `openTabs`, and Chrome-style bookmark JSON trees under `roots`.
+The importer accepts Polaris portable JSON, Netscape bookmark HTML exports, Chrome/Edge-style bookmark JSON trees, Firefox-style nested bookmark JSON, and common JSON arrays named `bookmarks`, `favorites`, `history`, `visits`, `tabs`, `openTabs`, and Chrome-style bookmark JSON trees under `roots`.
 
 ## Scramjet and Ultraviolet
 
-Scramjet and Ultraviolet are browser-runtime/proxy frameworks, not standardised browser-data containers. They do not define one universal export format for bookmarks, history, tabs or settings. A Polaris import cannot directly read another site's local storage or a different origin's browser database.
+Scramjet and Ultraviolet are browser-runtime frameworks, not standardised browser-data containers. They do not define one universal export format for bookmarks, history, tabs or settings. A Polaris import cannot directly read another site's local storage or a different origin's browser database.
+
+For the easiest transfer, first use the host browser's bookmark manager to export bookmarks as an HTML file. For Chrome or Edge, open the bookmark manager, use its menu, and choose Export bookmarks. For Firefox, open Manage Bookmarks, then Import and Backup → Export Bookmarks to HTML. Select that HTML file in Polaris. If the old Scramjet/Ultraviolet app has its own JSON export, import that as well to bring across supported history, tabs and preferences.
 
 For an app built on either runtime:
 1. Use that app's own export/backup feature if it provides one.
