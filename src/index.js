@@ -30,3 +30,5 @@ export { createFeatureProfile, createBrowserSurface, CompatibilityError } from "
 
 export const ENGINE_NAME = "Polaris Engine";
 export const ENGINE_VERSION = "0.5.0";
+
+export { analyzeLegacyProject, convertLegacyProject, createMigrationPlan } from "./migration/code-migration.js";
