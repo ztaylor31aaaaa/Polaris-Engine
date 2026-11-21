@@ -120,3 +120,13 @@ test("script runtime refuses to execute without an isolated engine",async()=>{
  const doc=parseHTML("<script>1+1</script>"),runtime=new ScriptRuntime();
  await assert.rejects(runtime.start(doc),/isolated JavaScript engine/i);
 });
+
+test("script bridge forwards DOM events to the isolated runtime queue",async()=>{
+ const doc=parseHTML("<main><button>Run</button></main>"),runtime=new PolarisDocumentRuntime({document:doc});runtime.decorateTree();
+ const bridge=new PolarisScriptBridge({runtime}),button=doc.querySelector("button");
+ const registered=await bridge.handle({type:"call",id:1,method:"addEventListener",args:{nodeId:button.nodeId,eventType:"click",listenerId:"listener-1"}});
+ assert.equal(registered.type,"result");
+ button.dispatchEvent(new PolarisEvent("click",{bubbles:true}));
+ const events=bridge.drainEvents();assert.equal(events.length,1);assert.equal(events[0].listenerId,"listener-1");
+ bridge.close();assert.equal(bridge.drainEvents().length,0);
+});
