@@ -53,11 +53,17 @@ export class PolarisFrameCompatibility {
   _createLocationFacade(){
     const frame=this;
     return Object.freeze({
-      get href(){return frame._url;},get origin(){try{return new URL(frame._url).origin}catch{return "null"}},
+      get href(){return frame._url;},set href(value){frame.navigate(value);},
+      get origin(){try{return new URL(frame._url).origin}catch{return "null"}},
       get protocol(){try{return new URL(frame._url).protocol}catch{return ""}},
       get host(){try{return new URL(frame._url).host}catch{return ""}},
       get hostname(){try{return new URL(frame._url).hostname}catch{return ""}},
+      get port(){try{return new URL(frame._url).port}catch{return ""}},
       get pathname(){try{return new URL(frame._url).pathname}catch{return ""}},
+      get search(){try{return new URL(frame._url).search}catch{return ""}},
+      set search(value){const u=new URL(frame._url);u.search=String(value);frame.navigate(u.href);},
+      get hash(){try{return new URL(frame._url).hash}catch{return ""}},
+      set hash(value){const u=new URL(frame._url);u.hash=String(value);frame.navigate(u.href);},
       assign(url){return frame.navigate(url);},replace(url){return frame.navigate(url,{replace:true});},
       toString(){return frame._url}
     });
@@ -66,7 +72,9 @@ export class PolarisFrameCompatibility {
     const frame=this;
     return Object.freeze({
       get length(){return frame.renderer.history?.entries?.length??0;},
-      back(){return frame.renderer.back();},forward(){return frame.renderer.forward();},
+      get state(){return frame.renderer.history?.state??null;},
+      go(delta=0){const entry=frame.renderer.history?.go(delta);if(entry){frame._url=entry.url;frame._emit("popstate",{state:entry.state,url:entry.url});}return entry;},
+      back(){return this.go(-1);},forward(){return this.go(1);},
       pushState(state,title,url){const next=url==null?frame._url:new URL(String(url),frame._url).href;frame.renderer.history?.pushState(state,title,next);frame._url=next;frame._emit("historychange",{url:next,state});},
       replaceState(state,title,url){const next=url==null?frame._url:new URL(String(url),frame._url).href;frame.renderer.history?.replaceState(state,title,next);frame._url=next;frame._emit("historychange",{url:next,state});}
     });
