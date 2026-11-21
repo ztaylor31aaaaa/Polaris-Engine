@@ -95,6 +95,16 @@ export function applyMigration(preview, { bookmarks = [], history = [], tabs = [
     settings: mode === "replace" && Object.keys(incoming.settings).length ? { ...incoming.settings } : { ...settings, ...incoming.settings }
   };
 }
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+/** Produces a Netscape bookmark HTML file accepted by common desktop browsers. */
+export function exportBookmarksHtml(bookmarks = []) {
+  const rows = bookmarkRows(bookmarks);
+  const links = rows.map(item => `<DT><A HREF="${escapeHtml(item.url)}">${escapeHtml(item.title)}</A>`).join("\n");
+  return `<!DOCTYPE NETSCAPE-Bookmark-file-1>\n<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">\n<TITLE>Bookmarks</TITLE>\n<H1>Bookmarks</H1>\n<DL><p>\n${links}\n</DL><p>\n`;
+}
 export function exportPortableData({ bookmarks = [], history = [], tabs = [], settings = {} } = {}) {
   return {
     app: "Polaris", format: "polaris-portable-data", schema: 1, exportedAt: new Date().toISOString(),
