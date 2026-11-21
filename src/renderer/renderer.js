@@ -20,7 +20,7 @@ export class PolarisRenderer {
     this.layoutEngine=options.layoutEngine??new LayoutEngine({measureText:(text,size,font)=>{if(this.context){this.context.save();this.context.font=`${size}px ${font??"Arial"}`;const width=this.context.measureText(String(text)).width;this.context.restore();return width;}return String(text).length*size*.52;}});
     this.painter=options.paintEngine??new PaintEngine(options);this.resourceLoader=options.resourceLoader??new ResourceLoader(options.resources);
     this.imageLoader=options.imageLoader??new ImageResourceLoader({resourceLoader:this.resourceLoader});this.images=new Map();
-    this.scriptRuntime=options.scriptRuntime??null;
+    this.scriptRuntime=options.scriptRuntime??(options.scriptEngine?new ScriptRuntime({engine:options.scriptEngine,resourceLoader:this.resourceLoader}):null);
     this.runtime=null;this.document=null;this.history=new PolarisHistory({onChange:entry=>{if(entry)this.loadURL(entry.url,{history:false}).catch(this.onError);}});
     this.onNavigate=options.onNavigate??null;this.onError=options.onError??(()=>{});
     this._clickHandler=e=>this._handlePointer(e,"click");this._pointerHandler=e=>this._handlePointer(e,"pointerdown");
@@ -29,7 +29,7 @@ export class PolarisRenderer {
   }
   _installDocument(html,options={}){
     this.document=this.parser.parse(html,options);this.runtime=new PolarisDocumentRuntime({document:this.document,onNavigate:(url,navOptions)=>this.navigate(url,navOptions),onSubmit:(form)=>this._submitForm(form)});
-    this.runtime.decorateTree();this.runtime.viewport=this.viewport;this.styles.setViewport(this.viewport);this.styles.clearStylesheets();
+    this.runtime.decorateTree();if(this.scriptRuntime)this.scriptRuntime.runtime=this.runtime;this.runtime.viewport=this.viewport;this.styles.setViewport(this.viewport);this.styles.clearStylesheets();
     for(const style of this.document.querySelectorAll("style"))this.styles.addStylesheet(style.textContent);
     this.history._navigate(this.document.url,null,options.replaceHistory??true);
     return this.document;
@@ -49,7 +49,7 @@ export class PolarisRenderer {
     await Promise.allSettled(images.map(async el=>{const result=await this.imageLoader.load(el.getAttribute("src"),{baseURL:this.document.url,signal:options.signal,credentials:options.credentials});this.images.set(el,result);}));
     this.painter.images=this.images;
   }
-  async startScripts(options={}){if(!this.scriptRuntime)throw new Error("No isolated ScriptRuntime has been configured");return this.scriptRuntime.start(this.document,options);}
+  async startScripts(options={}){if(!this.scriptRuntime)throw new Error("No isolated ScriptRuntime has been configured");this.scriptRuntime.runtime=this.runtime;return this.scriptRuntime.start(this.document,options);}
   async _submitForm(form){try{const {encodeFormData}=await import("./forms.js");const request=encodeFormData(form,form.getAttribute("method")??"GET");this.navigate(request.url);}catch(error){this.onError(error);}}
   navigate(url,options={}){
     const resolved=this.resourceLoader.resolve(url,this.document?.url??"about:blank");
