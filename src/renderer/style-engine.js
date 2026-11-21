@@ -32,7 +32,7 @@ const UA = {
   input:{fontFamily:"Arial, sans-serif",fontSize:"13px",padding:"2px"},
   ul:{paddingLeft:"40px"},ol:{paddingLeft:"40px"},li:{display:"list-item"}
 };
-function px(value, fallback = 0) { const m = String(value ?? "").trim().match(/^(-?(?:\d+\.?\d*|\.\d+))(px)?$/); return m ? Number(m[1]) : fallback; }
+function px(value, fallback = 0) { const m = String(value ?? "").trim().match(/^(-?(?:\d+\.?\d*|\.\d+))(px|em|rem)?$/); return m ? Number(m[1]) * (m[2]==="em"||m[2]==="rem"?16:1) : fallback; }
 function expandBox(style, base, candidates) {
   const value = style[base] ?? "0", parts = value.split(/\s+/).map(v => v.trim()).filter(Boolean);
   const [a,b=a,c=a,d=b] = parts;
@@ -82,9 +82,20 @@ export class StyleEngine {
   }
 }
 function expandBorders(style,candidates) {
-  const border=style.border;
-  if(border){const parts=border.split(/\\s+/);const width=parts.find(v=>/^\\d+(?:\\.\\d+)?px$/.test(v))??"1px";const lineStyle=parts.find(v=>["none","solid","dashed","dotted","double"].includes(v))??"solid";const color=parts.find(v=>v!==width&&v!==lineStyle)??"#000";for(const side of ["Top","Right","Bottom","Left"]){if(!candidates.has("border"+side+"Width"))style["border"+side+"Width"]=width;if(!candidates.has("border"+side+"Style"))style["border"+side+"Style"]=lineStyle;if(!candidates.has("border"+side+"Color"))style["border"+side+"Color"]=color;}}
-  for(const side of ["Top","Right","Bottom","Left"]){const key="border"+side;if(style[key]){const parts=style[key].split(/\\s+/);if(!candidates.has(key+"Width"))style[key+"Width"]=parts.find(v=>/^\\d+(?:\\.\\d+)?px$/.test(v))??"1px";if(!candidates.has(key+"Style"))style[key+"Style"]=parts.find(v=>["none","solid","dashed","dotted","double"].includes(v))??"solid";if(!candidates.has(key+"Color"))style[key+"Color"]=parts.find(v=>v!==style[key+"Width"]&&v!==style[key+"Style"])??"#000";}}
+  const expand=(key, sides)=>{
+    const value=style[key];if(!value)return;
+    const parts=value.split(/\s+/);
+    const width=parts.find(v=>/^-?[\d.]+(?:px|em|rem)$/.test(v))??"1px";
+    const lineStyle=parts.find(v=>["none","solid","dashed","dotted","double"].includes(v))??"solid";
+    const color=parts.find(v=>v!==width&&v!==lineStyle)??"#000";
+    for(const side of sides){
+      if(!candidates.has(side+"Width"))style[side+"Width"]=width;
+      if(!candidates.has(side+"Style"))style[side+"Style"]=lineStyle;
+      if(!candidates.has(side+"Color"))style[side+"Color"]=color;
+    }
+  };
+  expand("border",["borderTop","borderRight","borderBottom","borderLeft"]);
+  for(const side of ["Top","Right","Bottom","Left"])expand("border"+side,["border"+side]);
 }
 function awaitlessDeclarations(source) {
   return String(source).split(";").map(part => {
