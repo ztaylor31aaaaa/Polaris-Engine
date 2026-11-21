@@ -63,7 +63,7 @@ export class PolarisRenderer {
   resize(width,height,dpr){this.viewportState.resize(width,height,dpr);if(this.canvas){this.canvas.width=Math.round(width*(dpr??1));this.canvas.height=Math.round(height*(dpr??1));}return this.render();}
   scrollTo(x,y){this.viewportState.scrollTo(x,y);return this.render();}
   scrollBy(x,y){this.viewportState.scrollBy(x,y);return this.render();}
-  hitTest(x,y){if(!this.document)return null;return [...this.document.walk()].filter(n=>n instanceof ElementNode).reverse().find(n=>{const b=n.layout;return b&&x>=b.x&&y>=b.y&&x<=b.x+b.width&&y<=b.y+b.height;})??null;}
+  hitTest(x,y){if(!this.document)return null;return [...this.document.walk()].filter(n=>n instanceof ElementNode).reverse().find(n=>{const b=n.layout;return b&&x>=b.x&&y+this.viewportState.scrollY>=b.y&&x<=b.x+b.width&&y+this.viewportState.scrollY<=b.y+b.height;})??null;}
   _handlePointer(event,type){
     if(!this.document||!this.canvas)return;
     const rect=this.canvas.getBoundingClientRect?.()??{left:0,top:0,width:this.viewport.width,height:this.viewport.height};
@@ -78,7 +78,7 @@ export class PolarisRenderer {
   getAccessibilityTree(){return this.document?buildAccessibilityTree(this.document):[];}
   render(){
     if(!this.document)return null;
-    try{this.styles.compute(this.document);const layout=this.layoutEngine.layout(this.document,this.viewport);this.painter.images=this.images;return this.painter.paint(this.document,layout,this.context);}
+    try{this.styles.compute(this.document);const layout=this.layoutEngine.layout(this.document,this.viewport);this.painter.images=this.images;return this.painter.paint(this.document,layout,this.context,this.viewportState);}
     catch(error){this.onError(error);throw error;}
   }
   destroy(){this.canvas?.removeEventListener?.("click",this._clickHandler);this.canvas?.removeEventListener?.("pointerdown",this._pointerHandler);this.imageLoader.clear();this.scriptRuntime?.dispose?.();this.runtime=null;this.document=null;this.context=null;this.canvas=null;}
