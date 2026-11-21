@@ -67,12 +67,15 @@ export class TabManager {
 
   restore(data) {
     if (!data || data.schema !== 1 || !Array.isArray(data.tabs)) throw new TypeError("Unsupported tab session format.");
+    const restoredIds = new Map();
     const tabs = data.tabs.slice(0, this.maxTabs).map(item => {
       if (typeof item.title !== "string" || typeof item.url !== "string") throw new TypeError("Invalid tab entry.");
-      return { id: makeId(), title: item.title.slice(0, 120), url: item.url, pinned: Boolean(item.pinned), group: String(item.group || "").slice(0, 40), createdAt: Date.now(), state: "idle" };
+      const id = makeId();
+      if (typeof item.id === "string") restoredIds.set(item.id, id);
+      return { id, title: item.title.slice(0, 120), url: item.url, pinned: Boolean(item.pinned), group: String(item.group || "").slice(0, 40), createdAt: Date.now(), state: "idle" };
     });
     this.tabs = tabs;
-    this.activeId = tabs.length ? tabs[0].id : null;
+    this.activeId = restoredIds.get(data.activeId) || tabs[0]?.id || null;
     this.events.emit("session:restore", this.serialise());
     return this.tabs;
   }
