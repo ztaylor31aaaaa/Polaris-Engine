@@ -25,6 +25,7 @@ export class LayoutEngine {
       const boxSizing=s.boxSizing??"content-box";
       const horizontal=padding.left+padding.right+border.left+border.right,vertical=padding.top+padding.bottom+border.top+border.bottom;
       let contentWidth=length(s.width,availableWidth,null);
+      if(node.tagName==="img"&&contentWidth==null)contentWidth=Number(node.getAttribute("width"))||node._intrinsicWidth||300;
       if(contentWidth!=null&&boxSizing==="border-box")contentWidth=Math.max(0,contentWidth-horizontal);
       contentWidth=clamp(contentWidth??Math.max(0,availableWidth-margin.left-margin.right-horizontal),length(s.minWidth,availableWidth,0),length(s.maxWidth,availableWidth,null));
       const contentX=x+margin.left+border.left+padding.left,contentY=y+margin.top+border.top+padding.top;
@@ -77,7 +78,7 @@ export class LayoutEngine {
       if(s.display==="list-item")naturalHeight=Math.max(naturalHeight,line);
       let contentHeight=length(s.height,availableHeight,null);
       if(contentHeight!=null&&boxSizing==="border-box")contentHeight=Math.max(0,contentHeight-vertical);
-      contentHeight=clamp(contentHeight??naturalHeight,length(s.minHeight,availableHeight,0),length(s.maxHeight,availableHeight,null));
+      contentHeight=clamp(contentHeight??(node.tagName==="img"?(Number(node.getAttribute("height"))||node._intrinsicHeight||150):naturalHeight),length(s.minHeight,availableHeight,0),length(s.maxHeight,availableHeight,null));
       const totalWidth=contentWidth+horizontal,totalHeight=contentHeight+vertical;
       let finalX=x+margin.left,finalY=y+margin.top;
       if(s.position==="relative"){finalX+=px(s.left);finalY+=px(s.top);}
