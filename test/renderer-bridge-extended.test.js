@@ -34,3 +34,19 @@ test("extended bridge supports HTML insertion, text nodes and focus",async()=>{
  await call(5,"focus",{nodeId:button.nodeId});assert.equal(runtime.activeElement,button);
  bridge.close();
 });
+
+test("extended bridge supports attributes, classList, dataset and inline styles",async()=>{
+ const doc=parseHTML('<main><p class="copy" data-user-name="Zac"></p></main>'),runtime=new PolarisDocumentRuntime({document:doc});runtime.decorateTree();
+ const bridge=new PolarisDOMBridge({runtime}),p=doc.querySelector("p");
+ const call=(id,method,args)=>bridge.handle({type:"call",id,method,args});
+ await call(1,"classListAdd",{nodeId:p.nodeId,tokens:["active","selected"]});
+ assert.equal((await call(2,"classListContains",{nodeId:p.nodeId,token:"active"})).result,true);
+ await call(3,"setAttribute",{nodeId:p.nodeId,name:"aria-label",value:"sample"});
+ assert.equal((await call(4,"getAttribute",{nodeId:p.nodeId,name:"aria-label"})).result,"sample");
+ assert.equal((await call(5,"getDataset",{nodeId:p.nodeId})).result.userName,"Zac");
+ await call(6,"setStyleProperty",{nodeId:p.nodeId,name:"color",value:"red"});
+ assert.equal((await call(7,"getStyleProperty",{nodeId:p.nodeId,name:"color"})).result,"red");
+ await call(8,"setStyleText",{nodeId:p.nodeId,value:"display: block; margin-top: 4px"});
+ assert.match((await call(9,"getStyleText",{nodeId:p.nodeId})).result,/display:block|display: block/);
+ bridge.close();
+});
