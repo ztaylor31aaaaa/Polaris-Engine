@@ -65,7 +65,7 @@ export class PolarisRenderer {
     if(!this.document||!this.canvas)return;
     const rect=this.canvas.getBoundingClientRect?.()??{left:0,top:0,width:this.viewport.width,height:this.viewport.height};
     const x=(event.clientX-rect.left)*(this.viewport.width/(rect.width||this.viewport.width)),y=(event.clientY-rect.top)*(this.viewport.height/(rect.height||this.viewport.height));
-    const hit=this.hitTest(x,y);if(!hit)return;
+    const hit=this.hitTest(x,y);if(type==="pointerdown"){for(const node of this.document.querySelectorAll("*"))node._hover=false;if(hit)hit._hover=true;}if(!hit)return;
     const target=hit;const link=hit.tagName==="a"?hit:findAncestor(hit,"a");
     if(type==="click"&&link?.getAttribute("href")){event.preventDefault?.();this.navigate(link.getAttribute("href"));}
     const polarisEvent=this.runtime.createEvent(type,{bubbles:true,cancelable:true,detail:{clientX:x,clientY:y}});
