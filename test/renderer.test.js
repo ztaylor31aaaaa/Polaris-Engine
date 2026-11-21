@@ -123,3 +123,7 @@ test("flex layout distributes flexible cards into columns",()=>{
  assert.ok(cards[1].layout.x>cards[0].layout.x);
  assert.ok(cards[2].layout.x>cards[1].layout.x);
 });
+test("resource loader reports a useful code when browser fetch is blocked",async()=>{
+ const loader=new ResourceLoader({fetch:async()=>{throw new TypeError("Failed to fetch")}});
+ await assert.rejects(loader.fetchText("https://example.com/"),error=>error.code==="CORS_OR_NETWORK_ERROR"&&/CORS/.test(error.message));
+});
