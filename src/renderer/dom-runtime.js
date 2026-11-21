@@ -1,9 +1,10 @@
 import { DocumentNode,ElementNode,TextNode,CommentNode,PolarisNode } from "./document-model.js";
 import { PolarisEvent,PolarisCustomEvent,EventTargetMixin,dispatchPolarisEvent } from "./dom-events.js";
+import { HTMLParser } from "./html-parser.js";
 
 export class PolarisDocumentRuntime extends EventTargetMixin {
   constructor(options={}) {
-    super();this.document=options.document??new DocumentNode();this.mutationObservers=new Set();
+    super();this.document=options.document??new DocumentNode();this.parser=options.parser??new HTMLParser();this.mutationObservers=new Set();
     this.activeElement=null;this.onNavigate=options.onNavigate??(()=>{});this.onSubmit=options.onSubmit??(()=>{});
     this._installDocumentMethods();
   }
@@ -44,6 +45,20 @@ export class PolarisDocumentRuntime extends EventTargetMixin {
     el.dispatchEvent=event=>dispatchPolarisEvent(el,event);
     el.click=()=>this.dispatch(el,new PolarisEvent("click",{bubbles:true,cancelable:true}));
     el.focus=()=>this.focus(el);el.blur=()=>this.blur(el);
+    Object.defineProperty(el,"innerHTML",{configurable:true,get(){return this.childNodes.map(serializeRuntimeNode).join("");},set(value){
+      const fragment=runtime.parser.parse("<html><head></head><body>"+String(value??"")+"</body></html>");
+      const children=[...fragment.body.childNodes];this.replaceChildren(...children);runtime.decorateTree();
+      runtime.notifyMutation({type:"childList",target:this,addedNodes:children,removedNodes:[]});
+    }});
+    el.insertAdjacentHTML=(position,html)=>{
+      const fragment=runtime.parser.parse("<html><head></head><body>"+String(html??"")+"</body></html>"),nodes=[...fragment.body.childNodes],where=String(position).toLowerCase();
+      if(where==="beforebegin")for(const node of nodes)el.parentNode?.insertBefore(node,el);
+      else if(where==="afterend"){let ref=el.nextSibling;for(const node of nodes)el.parentNode?.insertBefore(node,ref);}
+      else if(where==="afterbegin"){let ref=el.firstChild;for(const node of nodes)el.insertBefore(node,ref);}
+      else if(where==="beforeend")for(const node of nodes)el.appendChild(node);
+      else throw new TypeError("Invalid insertAdjacentHTML position");
+      runtime.decorateTree();runtime.notifyMutation({type:"childList",target:el,addedNodes:nodes,removedNodes:[]});
+    };
     Object.defineProperty(el,"value",{get(){return this._value??this.getAttribute("value")??"";},set(v){this._value=String(v);}});
     Object.defineProperty(el,"checked",{get(){return Boolean(this._checked??this.hasAttribute("checked"));},set(v){this._checked=Boolean(v);}});
     Object.defineProperty(el,"disabled",{get(){return this.hasAttribute("disabled");},set(v){v?this.setAttribute("disabled",""):this.removeAttribute("disabled");}});
@@ -79,3 +94,4 @@ export class PolarisMutationObserver {
   takeRecords(){const records=this.records;this.records=[];return records;}
   disconnect(){for(const fn of this.disconnectors)fn();this.disconnectors=[];this.records=[];}
 }
+\nfunction serializeRuntimeNode(node){if(node.nodeType===3)return node.data.replace(/&/g,"&amp;").replace(/</g,"&lt;");if(node.nodeType===8)return "<!--"+node.data+"-->";if(node instanceof ElementNode){const attrs=[...node.attributes].map(([k,v])=>" "+k+"=\\""+String(v).replace(/&/g,"&amp;").replace(/\\"/g,"&quot;")+"\\"").join("");return "<"+node.tagName+attrs+">"+node.childNodes.map(serializeRuntimeNode).join("")+(["area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"].includes(node.tagName)?"":"</"+node.tagName+">");}return "";}\n
