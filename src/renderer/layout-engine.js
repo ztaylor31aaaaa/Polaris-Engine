@@ -48,7 +48,7 @@ export class LayoutEngine {
       if(isFlex){
         const items=children.map(child=>{
           if(child instanceof TextNode)return {node:child,basis:measure(child.data.trim(),s),min:0,flex:0};
-          const cs=child.computedStyle??{},basis=length(cs.flexBasis,contentWidth,null)??length(cs.width,contentWidth,null)??0;
+          const cs=child.computedStyle??{},intrinsic=child.tagName==="img"?(Number(child.getAttribute("width"))||child._intrinsicWidth||300):0,basis=length(cs.flexBasis,contentWidth,null)??length(cs.width,contentWidth,null)??intrinsic;
           const flex=parseFloat(cs.flex??cs.flexGrow??"0")||0;
           return {node:child,basis,min:length(cs.minWidth,contentWidth,0),flex};
         });
