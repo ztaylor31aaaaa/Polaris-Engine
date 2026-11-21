@@ -72,3 +72,5 @@ export { installPolarisScriptWorker } from "./renderer/script-worker-host.js";
 export { PolarisDOMBridge } from "./renderer/script-bridge-extended.js";
 
 export { PolarisFrameCompatibility } from "./renderer/frame-compatibility.js";
+
+export { PolarisDOMBridge } from "./renderer/script-bridge-extended.js";
