@@ -1,4 +1,4 @@
-import { parseCSS, selectorSpecificity } from "./css-parser.js";
+import { parseCSS, parseDeclarations, selectorSpecificity } from "./css-parser.js";
 import { matchesSelector, ElementNode } from "./document-model.js";
 
 const INITIAL = {
@@ -50,11 +50,11 @@ export class StyleEngine {
       const inline = node.getAttribute("style");
       if (inline) {
         let order = 100000;
-        for (const d of (awaitlessDeclarations(inline))) apply(d.property,d.value,d.important,1000,order++);
+        for (const d of parseDeclarations(inline)) apply(d.property,d.value,d.important,1000,order++);
       }
       for (const [property, item] of candidates) style[property] = item.value;
       if (node.hasAttribute("hidden")) style.display = "none";
-      if (node.hasAttribute("style")) Object.assign(node.style, Object.fromEntries(awaitlessDeclarations(inline).map(d=>[d.property,d.value])));
+      if (node.hasAttribute("style")) Object.assign(node.style, Object.fromEntries(parseDeclarations(inline).map(d=>[d.property,d.value])));
       if (style.display === "inline" && BLOCK.has(node.tagName)) style.display = "block";
       if (node.tagName === "img" || node.tagName === "input" || node.tagName === "button") if (style.display === "inline") style.display = "inline-block";
       expandBox(style,"margin"); expandBox(style,"padding");
