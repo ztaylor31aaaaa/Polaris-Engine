@@ -3,6 +3,7 @@ import { StyleEngine } from "./style-engine.js";
 import { LayoutEngine } from "./layout-engine.js";
 import { PaintEngine } from "./paint-engine.js";
 import { ElementNode } from "./document-model.js";
+import { ResourceLoader } from "./resource-loader.js";
 
 export class PolarisRenderer {
   constructor(options = {}) {
@@ -15,6 +16,7 @@ export class PolarisRenderer {
       return String(text).length*size*0.52;
     }});
     this.painter=options.paintEngine ?? new PaintEngine(options);
+    this.resourceLoader=options.resourceLoader ?? new ResourceLoader(options.resources);
     this.document=null;
     this.viewport={width:options.width ?? this.canvas?.width ?? 1024,height:options.height ?? this.canvas?.height ?? 768};
     this.onNavigate=options.onNavigate ?? (()=>{});
@@ -26,6 +28,22 @@ export class PolarisRenderer {
     this.document=this.parser.parse(html,options);
     this.styles.clearStylesheets();
     for (const style of this.document.querySelectorAll("style")) this.styles.addStylesheet(style.textContent);
+    this.styles.compute(this.document);
+    return this.render();
+  }
+  async loadURL(url, options = {}) {
+    const result=await this.resourceLoader.fetchText(url,{signal:options.signal,credentials:options.credentials});
+    this.document=this.parser.parse(result.text,{url:result.url});
+    this.styles.clearStylesheets();
+    for(const style of this.document.querySelectorAll("style")) this.styles.addStylesheet(style.textContent);
+    const links=this.document.querySelectorAll("link").filter(link=>(link.getAttribute("rel")??"").toLowerCase().split(/\\s+/).includes("stylesheet")&&link.getAttribute("href"));
+    const settled=await Promise.allSettled(links.map(link=>this.resourceLoader.fetchText(link.getAttribute("href"),{baseURL:result.url,signal:options.signal,credentials:options.credentials})));
+    for(let i=0;i<settled.length;i++) {
+      const item=settled[i];
+      if(item.status==="fulfilled") this.styles.addStylesheet(item.value.text);
+      else this.onError(item.reason);
+    }
+    this.document.url=result.url;
     this.styles.compute(this.document);
     return this.render();
   }
