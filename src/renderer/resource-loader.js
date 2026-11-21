@@ -33,7 +33,7 @@ export class ResourceLoader {
     } catch(error) {
       if(error instanceof ResourceLoadError) throw error;
       if(controller.signal.aborted) throw new ResourceLoadError("Resource request was aborted or timed out","ABORTED",url,error);
-      throw new ResourceLoadError("Resource request failed","NETWORK_ERROR",url,error);
+      throw new ResourceLoadError("Fetch failed. Check CORS permissions, network connectivity, DNS, TLS, and browser request policies.","CORS_OR_NETWORK_ERROR",url,error);
     } finally {
       clearTimeout(timeout); external?.removeEventListener("abort",abort);
     }
