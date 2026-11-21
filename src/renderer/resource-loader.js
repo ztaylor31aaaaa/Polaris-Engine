@@ -20,7 +20,7 @@ export class ResourceLoader {
   async fetchResponse(reference,options={}) {
     const url=this.resolve(reference,options.baseURL);
     this.policy?.check(url,{method:"GET",credentials:options.credentials??"same-origin"});
-    const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(new Error("Resource request timed out")),options.timeout ?? this.timeout);
+    const controller=new AbortController();let timedOut=false;const timeout=setTimeout(()=>{timedOut=true;controller.abort(new Error("Resource request timed out"));},options.timeout ?? this.timeout);
     const external=options.signal;
     const abort=()=>controller.abort(external.reason);
     if(external?.aborted) abort(); else external?.addEventListener("abort",abort,{once:true});
@@ -29,11 +29,15 @@ export class ResourceLoader {
       if(!response.ok) throw new ResourceLoadError(`Resource request failed with HTTP ${response.status}`,"HTTP_ERROR",url);
       const declared=Number(response.headers?.get?.("content-length") ?? 0);
       if(declared>this.maxBytes) throw new ResourceLoadError("Resource exceeds configured size limit","TOO_LARGE",url);
-      return {response,url};
+      return {response,url:response.url||url,requestedURL:url,redirected:Boolean(response.redirected)};
     } catch(error) {
       if(error instanceof ResourceLoadError) throw error;
-      if(controller.signal.aborted) throw new ResourceLoadError("Resource request was aborted or timed out","ABORTED",url,error);
-      throw new ResourceLoadError("Fetch failed. Check CORS permissions, network connectivity, DNS, TLS, and browser request policies.","CORS_OR_NETWORK_ERROR",url,error);
+      if(timedOut) throw new ResourceLoadError("The request exceeded the configured timeout.","REQUEST_TIMEOUT",url,error);
+      if(external?.aborted) throw new ResourceLoadError("The request was cancelled by its caller.","REQUEST_ABORTED",url,error);
+      const name=error?.name??"Error";
+      const code=name==="TypeError"?"CORS_OR_NETWORK_ERROR":"FETCH_ERROR";
+      const message=name==="TypeError"?"The browser blocked or could not complete this cross-origin request. Fetch does not expose whether the cause was CORS, DNS, TLS, an extension, or a network policy.":"The browser could not complete the resource request.";
+      const wrapped=new ResourceLoadError(message,code,url,error);wrapped.causeName=name;wrapped.causeMessage=String(error?.message??error);throw wrapped;
     } finally {
       clearTimeout(timeout); external?.removeEventListener("abort",abort);
     }
@@ -56,9 +60,9 @@ export class ResourceLoader {
     return bytes;
   }
   async fetchText(reference,options={}){
-    const {response,url}=await this.fetchResponse(reference,options);
+    const {response,url,requestedURL,redirected}=await this.fetchResponse(reference,options);
     const bytes=await this._readBytes(response,url);
-    return {text:new TextDecoder(options.encoding??"utf-8").decode(bytes),url,contentType:response.headers?.get?.("content-type")??"text/plain"};
+    return {text:new TextDecoder(options.encoding??"utf-8").decode(bytes),url,requestedURL,redirected,contentType:response.headers?.get?.("content-type")??"text/plain"};
   }
   async fetchBytes(reference,options={}){
     const {response,url}=await this.fetchResponse(reference,options);
