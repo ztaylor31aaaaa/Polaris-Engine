@@ -2,7 +2,7 @@ let nextNodeId = 1;
 
 export class PolarisNode {
   constructor(type, name = "") {
-    this.id = nextNodeId++;
+    this.nodeId = nextNodeId++;
     this.nodeType = type;
     this.nodeName = name;
     this.parentNode = null;
