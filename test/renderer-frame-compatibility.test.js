@@ -26,3 +26,17 @@ test("frame facade navigates through Polaris history and rejects use after destr
  frame.destroy();
  assert.throws(()=>frame.setHTML("<p>late</p>"),/destroyed/);
 });
+
+test("frame history pushState changes URL without reloading the document",()=>{
+ const frame=new PolarisFrameCompatibility({canvas:canvas()});
+ frame.setHTML("<main id=app>Keep this document</main>",{url:"https://example.test/start"});
+ const original=frame.contentDocument.getElementById("app");
+ frame.history.pushState({page:2},"","/next?x=1#part");
+ assert.equal(frame.location.href,"https://example.test/next?x=1#part");
+ assert.equal(frame.contentDocument.getElementById("app"),original);
+ assert.deepEqual(frame.renderer.history.current.state,{page:2});
+ frame.history.replaceState({page:3},"","/final");
+ assert.equal(frame.location.pathname,"/final");
+ assert.deepEqual(frame.renderer.history.current.state,{page:3});
+ frame.destroy();
+});
