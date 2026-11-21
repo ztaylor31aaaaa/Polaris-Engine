@@ -4,7 +4,7 @@ export function parseDeclarations(source) {
   for (const part of String(source).split(";")) {
     const colon = part.indexOf(":");
     if (colon < 1) continue;
-    const property = part.slice(0, colon).trim().toLowerCase();
+    const property = part.slice(0, colon).trim().replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
     let value = part.slice(colon + 1).trim(), important = false;
     if (!property || !value) continue;
     if (/\s*!important\s*$/i.test(value)) { value = value.replace(/\s*!important\s*$/i, "").trim(); important = true; }
