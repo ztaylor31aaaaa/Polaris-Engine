@@ -51,10 +51,13 @@ export function createLegacyMigrationFacade({ tabs, views, runtimes = null } = {
     },
     async close(tabId = tabs.activeId) {
       if (!managedTabs.has(tabId)) return false;
-      await views.unmount({ tabId });
-      if (runtimes?.stop) await runtimes.stop(tabId, "legacy-facade-close");
+      let failure = null;
+      try { await views.unmount({ tabId }); } catch (error) { failure = error; }
+      try { if (runtimes?.stop) await runtimes.stop(tabId, "legacy-facade-close"); }
+      catch (error) { failure ||= error; }
       tabs.close(tabId);
       managedTabs.delete(tabId);
+      if (failure) throw failure;
       return true;
     },
     getFrame(tabId = tabs.activeId) { return views.getFrame?.(tabId) || null; },
