@@ -25,6 +25,16 @@ console.log(plan.steps);
 
 The analyser reports file paths, occurrence counts, line numbers, severity and suggested next steps. It recognises common Scramjet, Ultraviolet, BareMux and legacy worker references. Some broad browser API matches are review hints, not proof of a dependency.
 
+## 2. Scan from the command line
+
+After installing the package, run the scanner against an existing project:
+
+```sh
+npx polaris-migrate ./my-existing-app --out polaris-migration-plan.json
+```
+
+The command scans supported JavaScript, TypeScript, HTML and JSON files, skips common generated/dependency folders, and writes a JSON migration plan. It does not edit source files. Exit code `2` means legacy references were found; exit code `1` means the scan failed.
+
 ## 2. Apply controlled replacements
 
 The converter only changes strings that the developer explicitly maps. It never rewrites arbitrary runtime calls based on an assumed API equivalence.
