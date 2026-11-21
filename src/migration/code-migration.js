@@ -87,6 +87,7 @@ export function createMigrationPlan(analysis) {
       { id: "workers", status: analysis.findings.some(item => item.engine === "service-worker") ? "required" : "review", title: "Review service workers", detail: "Remove old runtime worker imports and validate the replacement worker lifecycle." },
       { id: "verify", status: "required", title: "Run application tests", detail: "Test navigation, storage, messaging, media, workers and error handling in the target browser." }
     ],
+    mappings: getMigrationMappings(),
     findings: analysis.findings
   };
 }
