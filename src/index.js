@@ -73,3 +73,5 @@ export { PolarisDOMBridge } from "./renderer/script-bridge-extended.js";
 
 export { PolarisFrameCompatibility, createPolarisFrame } from "./renderer/frame-compatibility.js";
 
+
+export { SCRAMJET_PORT_FEATURES, getScramjetPortReport } from "./compat/scramjet-port.js";
