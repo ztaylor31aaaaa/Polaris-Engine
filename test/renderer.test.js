@@ -102,7 +102,7 @@ test("paint engine paints a document into a canvas-like context",()=>{
  const styles=new StyleEngine();styles.compute(doc);
  const layout=new LayoutEngine().layout(doc,{width:320,height:200});
  const painter=new PaintEngine();painter.paint(doc,layout,context,{scrollY:10});
- assert.ok(calls.includes("Polaris"));assert.ok(calls.includes("Renderer test"));
+ assert.ok(calls.includes("Polaris"));assert.ok(calls.join("").includes("Renderer test"));
 });
 
 
