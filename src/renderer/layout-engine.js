@@ -17,7 +17,7 @@ export class LayoutEngine {
     const width=Math.max(1,viewport.width??1024),height=Math.max(1,viewport.height??768),root=document.documentElement;
     const boxes=[],textRuns=[];
     if(!root)return {width,height,contentHeight:0,boxes,textRuns};
-    const measure=(text,style)=>this.measureText(text,px(style.fontSize,16),style.fontFamily);
+    const measure=(text,style)=>this.measureText(text,px(style.fontSize,16),style.fontFamily,style);
     const layoutNode=(node,x,y,availableWidth,availableHeight=height,forcedWidth=null)=>{
       if(!(node instanceof ElementNode))return {width:0,height:0};
       const s=node.computedStyle??{},display=s.display??"inline";
@@ -40,7 +40,7 @@ export class LayoutEngine {
           if(s.whiteSpace!=="nowrap"&&cursorX+wordWidth>contentX+contentWidth&&cursorX>contentX){
             cursorY+=Math.max(lineUsed,lineHeight);flowHeight+=Math.max(lineUsed,lineHeight);cursorX=contentX;lineUsed=0;
           }
-          textRuns.push({text:word,x:cursorX,y:cursorY+px(s.fontSize,16),maxWidth:Math.max(1,contentX+contentWidth-cursorX),style:s});
+          textRuns.push({text:word,x:cursorX,y:cursorY+Math.max(0,(lineHeight-px(s.fontSize,16))/2)+px(s.fontSize,16),maxWidth:Math.max(1,contentX+contentWidth-cursorX),style:s});
           cursorX+=wordWidth;lineUsed=Math.max(lineUsed,lineHeight);
         }
       };
