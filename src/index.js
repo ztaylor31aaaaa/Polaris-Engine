@@ -6,6 +6,7 @@ export { UrlWatcher } from "./navigation/url-watcher.js";
 export { TabManager } from "./tabs/tab-manager.js";
 export { JsonStore, BookmarkStore, HistoryStore } from "./storage/stores.js";
 export { CacheStore } from "./storage/cache-store.js";
+export { IndexedDBStore } from "./storage/indexeddb-store.js";
 export { runDiagnostics } from "./diagnostics/index.js";
 export { DisposableStack, createAbortScope } from "./runtime/disposable.js";
 export { TabRuntime } from "./runtime/tab-runtime.js";
@@ -29,7 +30,7 @@ export { inspectMigration, applyMigration, exportPortableData, exportBookmarksHt
 export { createFeatureProfile, createBrowserSurface, CompatibilityError } from "./compat/feature-profile.js";
 
 export const ENGINE_NAME = "Polaris Engine";
-export const ENGINE_VERSION = "0.6.0";
+export const ENGINE_VERSION = "0.6.1";
 
 export { analyzeLegacyProject, convertLegacyProject, createMigrationPlan, getMigrationMappings } from "./migration/code-migration.js";
 
