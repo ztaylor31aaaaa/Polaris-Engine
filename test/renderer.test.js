@@ -158,3 +158,12 @@ test("paint engine applies device pixel ratio while retaining CSS-pixel coordina
  assert.deepEqual(calls.find(call=>call[0]==="transform"),["transform",2,0,0,2,0,0]);
  assert.ok(calls.some(call=>call[0]==="clear"));
 });
+
+test("paint engine draws rounded backgrounds and uniform borders",()=>{
+ const calls=[];
+ const context={canvas:{width:200,height:100},clearRect(){},fillRect(){},save(){},restore(){},beginPath(){calls.push("path");},rect(){},roundRect(){calls.push("roundRect");},fill(){calls.push("fill");},stroke(){calls.push("stroke");},clip(){},translate(){},fillText(){}};
+ const doc=parseHTML('<style>.card{display:block;background-color:#eee;border:2px solid #333;border-radius:12px}</style><div class="card">Card</div>');
+ const styles=new StyleEngine();styles.addStylesheet(doc.querySelector("style").textContent);styles.compute(doc);
+ const layout=new LayoutEngine().layout(doc,{width:200,height:100});new PaintEngine().paint(doc,layout,context,{devicePixelRatio:1});
+ assert.ok(calls.includes("roundRect"));assert.ok(calls.includes("stroke"));
+});
