@@ -104,3 +104,22 @@ test("paint engine paints a document into a canvas-like context",()=>{
  const painter=new PaintEngine();painter.paint(doc,layout,context,{scrollY:10});
  assert.ok(calls.includes("Polaris"));assert.ok(calls.includes("Renderer test"));
 });
+
+
+test("renderer hides metadata and non-rendering head elements",()=>{
+ const doc=parseHTML('<html><head><title>Hidden title</title><style>body{color:red}</style><script>not visible</script></head><body><p>Visible</p></body></html>');
+ const styles=new StyleEngine();styles.compute(doc);
+ for(const tag of ["head","title","style","script"])assert.equal(doc.querySelector(tag).computedStyle.display,"none");
+ assert.equal(doc.body.querySelector("p").computedStyle.display,"block");
+});
+
+test("flex layout distributes flexible cards into columns",()=>{
+ const doc=parseHTML('<main><div class="grid"><section class="card">One</section><section class="card">Two</section><section class="card">Three</section></div></main><style>.grid{display:flex;gap:12px}.card{flex:1;min-width:150px}</style>');
+ const styles=new StyleEngine();styles.addStylesheet(doc.querySelector("style").textContent);styles.compute(doc);
+ new LayoutEngine().layout(doc,{width:800,height:500});
+ const cards=doc.querySelectorAll(".card");
+ assert.equal(cards.length,3);
+ assert.ok(cards[0].layout.width>=150);
+ assert.ok(cards[1].layout.x>cards[0].layout.x);
+ assert.ok(cards[2].layout.x>cards[1].layout.x);
+});
