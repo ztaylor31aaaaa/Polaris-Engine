@@ -143,3 +143,9 @@ test("layout places flex cards side by side with non-zero widths",()=>{
  assert.equal(cards.length,3);assert.ok(cards.every(card=>card.layout.width>=150));
  assert.ok(cards[1].layout.x>cards[0].layout.x);assert.ok(cards[2].layout.x>cards[1].layout.x);
 });
+test("HTML parser implicitly closes paragraphs and list items",()=>{
+ const doc=parseHTML("<main><p>One<p>Two<ul><li>A<li>B</ul></main>");
+ const paragraphs=doc.querySelectorAll("p"),items=doc.querySelectorAll("li");
+ assert.equal(paragraphs.length,2);assert.equal(paragraphs[0].textContent,"One");
+ assert.equal(paragraphs[1].textContent,"Two");assert.equal(items.length,2);
+});
