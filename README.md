@@ -20,7 +20,7 @@ Polaris Engine is a modular browser-runtime framework for Polaris. Version 0.6 a
 - **Diagnostics:** structured browser capability checks.
 - **Transport configuration:** host-registered provider selection, explicit enable/disable, optional startup initialisation, cancellation, timeout and typed lifecycle errors. No provider is bundled or enabled by default.
 - **Data migration:** preview-first JSON and Netscape bookmark HTML import/export for bookmarks, history, tabs and non-sensitive preferences.
-- **Code migration:** static Scramjet/Ultraviolet reference scanning, migration plans, API mapping suggestions, a lifecycle compatibility facade and developer-controlled source replacements.
+- **Code migration:** static Scramjet/Ultraviolet reference scanning, migration plans, API mapping suggestions, guarded developer-controlled source replacements with line previews, a lifecycle compatibility facade and component-file scanning.
 - **Migration CLI:** `polaris-migrate ./your-project --out migration-plan.json` scans an existing project without modifying its files.
 
 ## Runtime safety
