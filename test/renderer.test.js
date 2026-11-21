@@ -40,3 +40,21 @@ test("layout engine creates measurable element boxes", () => {
   assert.ok(doc.querySelector("main").layout.width>0);
   assert.ok(layout.contentHeight>=480);
 });
+
+import { ResourceLoader, ResourceLoadError } from "../src/renderer/resource-loader.js";
+
+test("resource loader resolves relative web URLs", () => {
+  const loader=new ResourceLoader({fetch:async()=>new Response("ok")});
+  assert.equal(loader.resolve("/asset.css","https://example.com/page"),"https://example.com/asset.css");
+});
+test("resource loader rejects unsupported URL schemes", () => {
+  const loader=new ResourceLoader({fetch:async()=>new Response("ok")});
+  assert.throws(()=>loader.resolve("javascript:alert(1)"),ResourceLoadError);
+});
+test("resource loader reads text while respecting response size limits", async () => {
+  const loader=new ResourceLoader({fetch:async()=>new Response("hello"),maxBytes:16});
+  const result=await loader.fetchText("https://example.com/page");
+  assert.equal(result.text,"hello");
+  const limited=new ResourceLoader({fetch:async()=>new Response("this is too long"),maxBytes:4});
+  await assert.rejects(limited.fetchText("https://example.com/page"),/size limit/i);
+});
