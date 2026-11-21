@@ -60,7 +60,8 @@
     "./renderer/capabilities": "./src/renderer/runtime-capabilities.js",
     "./renderer/scripts": "./src/renderer/script-runtime.js",
     "./renderer/worker-engine": "./src/renderer/worker-engine-adapter.js",
-    "./renderer/script-worker-host": "./src/renderer/script-worker-host.js"
+    "./renderer/script-worker-host": "./src/renderer/script-worker-host.js",
+    "./renderer/bridge-dom": "./src/renderer/script-bridge-extended.js"
   },
   "scripts": {
     "test": "node --test",
