@@ -127,3 +127,19 @@ test("resource loader reports a useful code when browser fetch is blocked",async
  const loader=new ResourceLoader({fetch:async()=>{throw new TypeError("Failed to fetch")}});
  await assert.rejects(loader.fetchText("https://example.com/"),error=>error.code==="CORS_OR_NETWORK_ERROR"&&/CORS/.test(error.message));
 });
+test("layout records separate text runs so nested paragraphs do not overlap",()=>{
+ const doc=parseHTML('<main><h1>Heading</h1><p>First paragraph text.</p><p>Second paragraph text.</p></main>');
+ const styles=new StyleEngine();styles.compute(doc);
+ const layout=new LayoutEngine().layout(doc,{width:500,height:400});
+ const first=layout.textRuns.find(run=>run.text.includes("First"));
+ const second=layout.textRuns.find(run=>run.text.includes("Second"));
+ assert.ok(first&&second);assert.ok(second.y>first.y);
+});
+
+test("layout places flex cards side by side with non-zero widths",()=>{
+ const doc=parseHTML('<main><div class="grid"><section class="card">One</section><section class="card">Two</section><section class="card">Three</section></div></main><style>.grid{display:flex;gap:12px}.card{flex:1;min-width:150px}</style>');
+ const styles=new StyleEngine();styles.addStylesheet(doc.querySelector("style").textContent);styles.compute(doc);
+ new LayoutEngine().layout(doc,{width:800,height:500});const cards=doc.querySelectorAll(".card");
+ assert.equal(cards.length,3);assert.ok(cards.every(card=>card.layout.width>=150));
+ assert.ok(cards[1].layout.x>cards[0].layout.x);assert.ok(cards[2].layout.x>cards[1].layout.x);
+});
