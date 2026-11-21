@@ -15,8 +15,8 @@ export class PolarisRenderer {
   constructor(options={}){
     this.canvas=options.canvas??null;this.context=options.context??this.canvas?.getContext?.("2d")??null;
     this.parser=options.parser??new HTMLParser();this.styles=options.styleEngine??new StyleEngine();
-    this.viewportState=new RendererViewport({width:options.width??this.canvas?.width??1024,height:options.height??this.canvas?.height??768});
-    this.viewport={width:this.viewportState.width,height:this.viewportState.height};
+    this.viewportState=new RendererViewport({width:options.width??this.canvas?.clientWidth??this.canvas?.width??1024,height:options.height??this.canvas?.clientHeight??this.canvas?.height??768,devicePixelRatio:options.devicePixelRatio??globalThis.devicePixelRatio??1});
+    this.viewport={width:this.viewportState.width,height:this.viewportState.height,devicePixelRatio:this.viewportState.devicePixelRatio};
     this.layoutEngine=options.layoutEngine??new LayoutEngine({measureText:(text,size,font)=>{if(this.context){this.context.save();this.context.font=`${size}px ${font??"Arial"}`;const width=this.context.measureText(String(text)).width;this.context.restore();return width;}return String(text).length*size*.52;}});
     this.painter=options.paintEngine??new PaintEngine(options);this.resourceLoader=options.resourceLoader??new ResourceLoader(options.resources);
     this.imageLoader=options.imageLoader??new ImageResourceLoader({resourceLoader:this.resourceLoader});this.images=new Map();
@@ -25,7 +25,7 @@ export class PolarisRenderer {
     this.onNavigate=options.onNavigate??null;this.onError=options.onError??(()=>{});
     this._clickHandler=e=>this._handlePointer(e,"click");this._pointerHandler=e=>this._handlePointer(e,"pointerdown");
     this.canvas?.addEventListener?.("click",this._clickHandler);this.canvas?.addEventListener?.("pointerdown",this._pointerHandler);
-    this.viewportState.onChange(state=>{this.viewport={width:state.width,height:state.height};this.styles.setViewport(this.viewport);this.render();});
+    this.viewportState.onChange(state=>{this.viewport={width:state.width,height:state.height,devicePixelRatio:state.devicePixelRatio};this.styles.setViewport(this.viewport);this.render();});
   }
   _installDocument(html,options={}){
     this.document=this.parser.parse(html,options);this.runtime=new PolarisDocumentRuntime({document:this.document,parser:this.parser,onNavigate:(url,navOptions)=>this.navigate(url,navOptions),onSubmit:(form)=>this._submitForm(form)});
@@ -60,7 +60,7 @@ export class PolarisRenderer {
   back(){return this.history.back();}
   forward(){return this.history.forward();}
   addStylesheet(css){this.styles.addStylesheet(css);if(this.document)this.styles.compute(this.document);return this.render();}
-  resize(width,height,dpr){this.viewportState.resize(width,height,dpr);if(this.canvas){this.canvas.width=Math.round(width*(dpr??1));this.canvas.height=Math.round(height*(dpr??1));}return this.render();}
+  resize(width,height,dpr=this.viewportState.devicePixelRatio){this.viewportState.resize(width,height,dpr);if(this.canvas){this.canvas.style&&(this.canvas.style.width=width+"px",this.canvas.style.height=height+"px");this.canvas.width=Math.round(width*dpr);this.canvas.height=Math.round(height*dpr);}return this.render();}
   scrollTo(x,y){this.viewportState.scrollTo(x,y);return this.render();}
   scrollBy(x,y){this.viewportState.scrollBy(x,y);return this.render();}
   hitTest(x,y){if(!this.document)return null;return [...this.document.walk()].filter(n=>n instanceof ElementNode).reverse().find(n=>{const b=n.layout;return b&&x>=b.x&&y+this.viewportState.scrollY>=b.y&&x<=b.x+b.width&&y+this.viewportState.scrollY<=b.y+b.height;})??null;}
