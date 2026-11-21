@@ -55,6 +55,11 @@ test("script bridge only accepts its explicit DOM operation allowlist",async()=>
  const bridge=new PolarisScriptBridge({runtime}),id=doc.querySelector("main").nodeId;
  const result=await bridge.handle({type:"call",id:1,method:"setAttribute",args:{nodeId:id,name:"data-ready",value:"yes"}});
  assert.equal(result.type,"result");assert.equal(doc.querySelector("main").getAttribute("data-ready"),"yes");
+ const child=await bridge.handle({type:"call",id:3,method:"createElement",args:{tagName:"p"}});
+ const appended=await bridge.handle({type:"call",id:4,method:"appendChild",args:{parentId:id,childId:child.result}});
+ assert.equal(appended.type,"result");assert.equal(doc.querySelector("main p")!==null,true);
+ await bridge.handle({type:"call",id:5,method:"setStyle",args:{nodeId:child.result,property:"color",value:"red"}});
+ assert.equal(doc.querySelector("p").style.color,"red");
  const denied=await bridge.handle({type:"call",id:2,method:"executeJavaScript",args:{source:"alert(1)"}});
  assert.equal(denied.type,"error");bridge.close();
 });
