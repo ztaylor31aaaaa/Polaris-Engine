@@ -65,7 +65,7 @@ test("script bridge only accepts its explicit DOM operation allowlist",async()=>
 });
 test("accessibility tree exposes semantic roles and labels",()=>{
  const doc=parseHTML('<main><button aria-label="Save">x</button><img alt="Planet"></main>');
- const tree=buildAccessibilityTree(doc),main=tree[0].children[0];
+ const tree=buildAccessibilityTree(doc),main=tree[0];
  assert.equal(main.role,"main");assert.equal(main.children[0].role,"button");assert.equal(main.children[0].name,"Save");
  assert.equal(main.children[1].name,"Planet");
 });
