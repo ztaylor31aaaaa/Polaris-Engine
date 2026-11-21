@@ -40,3 +40,17 @@ test("frame history pushState changes URL without reloading the document",()=>{
  assert.deepEqual(frame.renderer.history.current.state,{page:3});
  frame.destroy();
 });
+test("frame exposes location components and history traversal state",()=>{
+ const frame=new PolarisFrameCompatibility({canvas:canvas()});
+ frame.setHTML("<p>History test</p>",{url:"https://example.test/start"});
+ frame.history.pushState({step:1},"","/one?x=1#top");
+ assert.equal(frame.location.search,"?x=1");assert.equal(frame.location.hash,"#top");
+ assert.deepEqual(frame.history.state,{step:1});
+ frame.history.pushState({step:2},"","/two");
+ assert.equal(frame.history.state.step,2);
+ frame.history.back();
+ assert.equal(frame.location.pathname,"/one");assert.equal(frame.history.state.step,1);
+ frame.history.forward();
+ assert.equal(frame.location.pathname,"/two");assert.equal(frame.history.state.step,2);
+ frame.destroy();
+});
