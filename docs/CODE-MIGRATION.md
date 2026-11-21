@@ -23,7 +23,7 @@ const plan = createMigrationPlan(analysis);
 console.log(plan.steps);
 ```
 
-The analyser reports file paths, occurrence counts, line numbers, severity and suggested next steps. It recognises common Scramjet, Ultraviolet, BareMux and legacy worker references. Some broad browser API matches are review hints, not proof of a dependency.
+The analyser reports file paths, occurrence counts, line numbers, severity and suggested next steps. It also scans common Vue, Svelte and Astro component files. It recognises common Scramjet, Ultraviolet, BareMux and legacy worker references. Some broad browser API matches are review hints, not proof of a dependency.
 
 ## 2. Scan from the command line
 
@@ -37,7 +37,7 @@ The command scans supported JavaScript, TypeScript, HTML and JSON files, skips c
 
 ## 2. Apply controlled replacements
 
-The converter only changes strings that the developer explicitly maps. It never rewrites arbitrary runtime calls based on an assumed API equivalence.
+The converter only changes strings that the developer explicitly maps. It never rewrites arbitrary runtime calls based on an assumed API equivalence. Each replacement can be restricted to named files and guarded with expected or maximum occurrence counts. The report includes exact changed line numbers so you can inspect the patch before writing it.
 
 ```js
 import { convertLegacyProject } from "@polaris/engine";
