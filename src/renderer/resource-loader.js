@@ -7,7 +7,8 @@ export class ResourceLoader {
     this.fetch=options.fetch ?? globalThis.fetch?.bind(globalThis);
     this.timeout=options.timeout ?? 15000;
     this.maxBytes=options.maxBytes ?? 5*1024*1024;
-    this.headers={...(options.headers ?? {})};\n    this.policy=options.policy??null;
+    this.headers={...(options.headers ?? {})};
+    this.policy=options.policy??null;
     if(typeof this.fetch!=="function") throw new Error("Fetch is unavailable");
   }
   resolve(reference,base="about:blank") {
@@ -17,7 +18,8 @@ export class ResourceLoader {
     return url.href;
   }
   async fetchResponse(reference,options={}) {
-    const url=this.resolve(reference,options.baseURL);\n    this.policy?.check(url,{method:"GET",credentials:options.credentials??"same-origin"});
+    const url=this.resolve(reference,options.baseURL);
+    this.policy?.check(url,{method:"GET",credentials:options.credentials??"same-origin"});
     const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(new Error("Resource request timed out")),options.timeout ?? this.timeout);
     const external=options.signal;
     const abort=()=>controller.abort(external.reason);
