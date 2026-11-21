@@ -29,6 +29,6 @@ export { inspectMigration, applyMigration, exportPortableData, exportBookmarksHt
 export { createFeatureProfile, createBrowserSurface, CompatibilityError } from "./compat/feature-profile.js";
 
 export const ENGINE_NAME = "Polaris Engine";
-export const ENGINE_VERSION = "0.5.0";
+export const ENGINE_VERSION = "0.6.0";
 
 export { analyzeLegacyProject, convertLegacyProject, createMigrationPlan, getMigrationMappings } from "./migration/code-migration.js";
