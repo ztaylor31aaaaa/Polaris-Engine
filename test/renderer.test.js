@@ -101,7 +101,6 @@ test("paint engine paints a document into a canvas-like context",()=>{
  const doc=parseHTML("<main><h1>Polaris</h1><p>Renderer test</p></main>");
  const styles=new StyleEngine();styles.compute(doc);
  const layout=new LayoutEngine().layout(doc,{width:320,height:200});
- const {PaintEngine}=awaitImportPaintEngine();
  const painter=new PaintEngine();painter.paint(doc,layout,context,{scrollY:10});
  assert.ok(calls.includes("Polaris"));assert.ok(calls.includes("Renderer test"));
 });
