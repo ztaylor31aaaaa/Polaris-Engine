@@ -67,8 +67,8 @@ export class PolarisFrameCompatibility {
     return Object.freeze({
       get length(){return frame.renderer.history?.entries?.length??0;},
       back(){return frame.renderer.back();},forward(){return frame.renderer.forward();},
-      pushState(state,title,url){return frame.navigate(url??frame._url,{state});},
-      replaceState(state,title,url){return frame.navigate(url??frame._url,{state,replace:true});}
+      pushState(state,title,url){const next=url==null?frame._url:new URL(String(url),frame._url).href;frame.renderer.history?.pushState(state,title,next);frame._url=next;frame._emit("historychange",{url:next,state});},
+      replaceState(state,title,url){const next=url==null?frame._url:new URL(String(url),frame._url).href;frame.renderer.history?.replaceState(state,title,next);frame._url=next;frame._emit("historychange",{url:next,state});}
     });
   }
   _createWindowFacade(){
