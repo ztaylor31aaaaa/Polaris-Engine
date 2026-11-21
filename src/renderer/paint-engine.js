@@ -4,7 +4,7 @@ export class PaintEngine {
   constructor(options={}){this.background=options.background??"#ffffff";this.lastFrame=null;this.images=options.images??new Map();}
   paint(document,layout,context,viewport={}) {
     if(!context)throw new TypeError("A CanvasRenderingContext2D is required");
-    const canvas=context.canvas;context.clearRect(0,0,canvas?.width??layout.width,canvas?.height??layout.height);
+    const canvas=context.canvas,dpr=Math.max(1,Number(viewport.devicePixelRatio??1));context.save();context.setTransform?.(dpr,0,0,dpr,0,0);context.clearRect(0,0,layout.width,layout.height);
     context.fillStyle=this.background;context.fillRect(0,0,layout.width,layout.height);
     context.save();context.beginPath();context.rect(0,0,layout.width,layout.height);context.clip();context.translate(-(viewport.scrollX??0),-(viewport.scrollY??0));
     for(const node of layout.boxes??[]){
@@ -32,7 +32,7 @@ export class PaintEngine {
       context.textBaseline="alphabetic";context.textAlign="left";
       context.fillText(run.text,run.x,run.y,run.maxWidth??layout.width);context.restore();
     }
-    context.restore();
+    context.restore();context.restore();
     this.lastFrame={width:layout.width,height:layout.height,contentHeight:layout.contentHeight,paintedAt:Date.now()};
     return this.lastFrame;
   }
