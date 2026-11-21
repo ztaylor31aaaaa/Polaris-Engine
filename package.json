@@ -21,6 +21,7 @@
     "./telemetry": "./src/telemetry/performance-monitor.js",
     "./adapters": "./src/adapters/view-adapter.js",
     "./platform": "./src/platform/web-platform.js",
+    "./fetch": "./src/platform/fetch-adapter.js",
     "./workers": "./src/platform/worker-manager.js",
     "./rpc": "./src/platform/message-rpc.js",
     "./dom": "./src/dom/dom-observer.js",
