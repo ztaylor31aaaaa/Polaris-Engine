@@ -76,3 +76,12 @@ test("selector engine supports :not and general sibling combinators",()=>{
  assert.equal(doc.querySelectorAll("p:not(.skip)").length,2);
  assert.equal(doc.querySelectorAll(".skip ~ .active").length,1);
 });
+
+test("CSS shorthand declarations affect computed box model and borders",()=>{
+ const doc=parseHTML('<style>.card { margin: 4px 8px; padding: 3px; border: 2px solid red; }</style><div class="card"></div>');
+ const engine=new StyleEngine();engine.addStylesheet(doc.querySelector("style").textContent);engine.compute(doc);
+ const card=doc.querySelector(".card");
+ assert.equal(card.computedStyle.marginTop,"4px");assert.equal(card.computedStyle.marginRight,"8px");
+ assert.equal(card.computedStyle.paddingLeft,"3px");assert.equal(card.computedStyle.borderTopWidth,"2px");
+ assert.equal(card.computedStyle.borderTopStyle,"solid");assert.equal(card.computedStyle.borderTopColor,"red");
+});
