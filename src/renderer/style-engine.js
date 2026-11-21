@@ -65,7 +65,7 @@ export class StyleEngine {
 }
 function awaitlessDeclarations(source) {
   return String(source).split(";").map(part => {
-    const i=part.indexOf(":"); return i>0 ? {property:part.slice(0,i).trim().toLowerCase(),value:part.slice(i+1).trim(),important:false} : null;
+    const i=part.indexOf(":"); return i>0 ? {property:part.slice(0,i).trim().replace(/-([a-z])/g, (_, letter) => letter.toUpperCase()),value:part.slice(i+1).trim(),important:false} : null;
   }).filter(d=>d?.property && d.value);
 }
 export { px };
