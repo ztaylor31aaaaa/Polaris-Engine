@@ -54,3 +54,13 @@ test("legacy facade cleans up a runtime if view mounting fails", async () => {
   assert.equal(state.tabs.tabs.length, 0);
   assert.deepEqual(state.stopped, ["tab-1"]);
 });
+
+test("legacy facade removes tab state even when view cleanup reports an error", async () => {
+  const state = setup();
+  const facade = createLegacyMigrationFacade(state);
+  const opened = await facade.open("https://example.com");
+  state.views.unmount = async () => { throw new Error("unmount failed"); };
+  await assert.rejects(facade.close(opened.tab.id), /unmount failed/);
+  assert.equal(state.tabs.tabs.length, 0);
+  assert.deepEqual(state.stopped, [opened.tab.id]);
+});
