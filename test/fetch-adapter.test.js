@@ -71,3 +71,23 @@ test("convenience methods set their HTTP method", async () => {
   await adapter.delete("https://example.test/");
   assert.deepEqual(methods, ["POST", "PUT", "PATCH", "DELETE"]);
 });
+
+test("preserves body and headers when given a Request object", async () => {
+  let received;
+  const adapter = new FetchAdapter({
+    fetchImpl: async request => {
+      received = request;
+      return new Response("ok");
+    },
+  });
+  const original = new Request("https://example.test/submit", {
+    method: "POST",
+    headers: { "content-type": "text/plain", "x-original": "kept" },
+    body: "payload",
+  });
+  await adapter.fetch(original, { headers: { "x-extra": "added" } });
+  assert.equal(received.method, "POST");
+  assert.equal(received.headers.get("x-original"), "kept");
+  assert.equal(received.headers.get("x-extra"), "added");
+  assert.equal(await received.text(), "payload");
+});
