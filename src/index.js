@@ -47,3 +47,5 @@ export { StyleEngine } from "./renderer/style-engine.js";
 export { LayoutEngine } from "./renderer/layout-engine.js";
 export { PaintEngine } from "./renderer/paint-engine.js";
 export { PolarisRenderer } from "./renderer/renderer.js";
+
+export { ResourceLoader, ResourceLoadError } from "./renderer/resource-loader.js";
