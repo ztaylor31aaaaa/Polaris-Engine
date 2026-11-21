@@ -130,3 +130,19 @@ test("script bridge forwards DOM events to the isolated runtime queue",async()=>
  const events=bridge.drainEvents();assert.equal(events.length,1);assert.equal(events[0].listenerId,"listener-1");
  bridge.close();assert.equal(bridge.drainEvents().length,0);
 });
+
+test("DOM runtime parses innerHTML and insertAdjacentHTML mutations",()=>{
+ const doc=parseHTML("<main><p>old</p></main>"),runtime=new PolarisDocumentRuntime({document:doc});runtime.decorateTree();
+ const main=doc.querySelector("main");
+ main.innerHTML='<section class="fresh"><b>new</b></section>';
+ assert.equal(main.querySelector(".fresh b").textContent,"new");
+ main.insertAdjacentHTML("beforeend","<p>second</p>");
+ assert.equal(main.querySelectorAll("p").length,1);
+ assert.equal(main.textContent,"newsecond");
+});
+test("DOM node clone and insertion helpers preserve tree ownership",()=>{
+ const doc=parseHTML("<main><p>A</p></main>"),main=doc.querySelector("main"),p=main.querySelector("p");
+ const clone=p.cloneNode(true);clone.textContent="B";p.after(clone);
+ assert.equal(main.children.length,2);assert.equal(main.children[1].textContent,"B");
+ assert.equal(clone.isConnected,true);clone.remove();assert.equal(clone.isConnected,false);
+});
