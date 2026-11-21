@@ -46,7 +46,7 @@ export function parseCSS(css,context={}){
       const selector=text.slice(i,open).trim(),body=text.slice(open+1,close);
       if(selector.startsWith("@media")){
         const condition=selector.slice(6).trim(),combined=media?media+" and "+condition:condition;
-        if(mediaMatches(combined,context))parseBlock(body,combined);
+        parseBlock(body,combined);
       }else if(selector.startsWith("@")){/* Unsupported grouping and declaration at-rules are ignored. */}
       else if(selector){
         for(const item of splitTopLevel(selector,",")){const trimmed=item.trim();if(trimmed)rules.push({selector:trimmed,declarations:parseDeclarations(body),order:rules.length,media:media||null});}
