@@ -58,3 +58,10 @@ test("resource loader reads text while respecting response size limits", async (
   const limited=new ResourceLoader({fetch:async()=>new Response("this is too long"),maxBytes:4});
   await assert.rejects(limited.fetchText("https://example.com/page"),/size limit/i);
 });
+
+test("CSS parser preserves media rules and evaluates them at compute time",()=>{
+ const doc=parseHTML('<style>@media (max-width: 600px) { .panel { display: none; } } @media (min-width: 601px) { .panel { display: block; } }</style><div class="panel"></div>');
+ const engine=new StyleEngine();engine.addStylesheet(doc.querySelector("style").textContent);
+ engine.setViewport({width:500,height:700});engine.compute(doc);assert.equal(doc.querySelector(".panel").computedStyle.display,"none");
+ engine.setViewport({width:900,height:700});engine.compute(doc);assert.equal(doc.querySelector(".panel").computedStyle.display,"block");
+});
