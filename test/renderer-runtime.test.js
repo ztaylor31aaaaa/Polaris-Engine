@@ -201,3 +201,18 @@ test("worker script host supports asynchronous DOM bridge round trips",async()=>
  await new Promise(resolve=>setTimeout(resolve,0));
  assert.equal(scope.messages.at(-1).result,"app-root");await host.dispose();
 });
+
+import { PolarisDOMBridge } from "../src/renderer/script-bridge-extended.js";
+
+test("expanded DOM bridge exposes allowlisted element construction and properties",async()=>{
+ const doc=parseHTML("<main id='app'></main>"),runtime=new PolarisDocumentRuntime({document:doc});runtime.decorateTree();
+ const bridge=new PolarisDOMBridge({runtime}),root=doc.querySelector("main").nodeId;
+ const created=await bridge.handle({type:"call",id:1,method:"createElement",args:{tagName:"button"}});
+ const button=created.result;
+ await bridge.handle({type:"call",id:2,method:"setProperty",args:{nodeId:button,name:"textContent",value:"Launch"}});
+ await bridge.handle({type:"call",id:3,method:"appendChild",args:{parentId:root,childId:button}});
+ const text=await bridge.handle({type:"call",id:4,method:"getProperty",args:{nodeId:button,name:"textContent"}});
+ assert.equal(text.result,"Launch");
+ const matches=await bridge.handle({type:"call",id:5,method:"matches",args:{nodeId:button,selector:"button"}});
+ assert.equal(matches.result,true);bridge.close();
+});
