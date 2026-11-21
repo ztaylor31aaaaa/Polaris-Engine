@@ -7,7 +7,8 @@ Polaris Engine is a modular browser-runtime framework for Polaris. Version 0.6 a
 - **Navigation:** URL resolution and inspection, same-origin checks, history state and navigation events.
 - **Tabs and sessions:** tab lifecycle, pinning, groups, closed-tab recovery and session serialisation.
 - **Runtime:** per-tab runtime lifecycle, resource disposal, abort scopes and runtime limits.
-- **Document views:** HTTP(S) iframe mounting and cleanup through an adapter; subject to browser framing restrictions.
+- **Custom renderer (experimental):** Polaris-owned document tree, HTML tokeniser, CSS parser/cascade, initial block/inline/flex layout and Canvas 2D painter. It does not use an iframe for its own rendering path; see [docs/RENDERER.md](docs/RENDERER.md).
+- **Document views:** optional HTTP(S) iframe mounting and cleanup through an adapter; subject to browser framing restrictions.
 - **Platform APIs:** browser feature detection, native Fetch adapter, WebSocket, Server-Sent Events and BroadcastChannel adapters, Web Worker lifecycle, MessagePort RPC and expanded browser capability catalogue.
 - **Frames:** iframe lifecycle controller, sandbox defaults, explicit-origin messaging and frame events.
 - **Plugins:** dependency-aware plugin activation, shutdown ordering and cleanup.
@@ -37,12 +38,12 @@ npm run check
 npm test
 ```
 
-## Website rendering: current limitation
+## Website rendering: current status
 
-**The current document view is an ordinary browser iframe, not a custom browser renderer.** Sites that send restrictive `X-Frame-Options` or Content Security Policy `frame-ancestors` headers can refuse to load inside it. Polaris cannot override those site-owner policies from page JavaScript. A genuine custom renderer capable of displaying arbitrary modern websites would require a separate browser-engine implementation or a native browser host; it is not provided by this web-based package.
+Polaris now includes an **experimental custom canvas renderer** with its own document model, HTML parser, CSS style engine, layout engine and paint engine. This is the beginning of a separate rendering path rather than an iframe wrapper. It currently handles a limited HTML/CSS subset and does not execute page JavaScript or provide full browser compatibility. The ordinary iframe adapter remains optional and is still subject to `X-Frame-Options` and Content Security Policy `frame-ancestors` restrictions. See [docs/RENDERER.md](docs/RENDERER.md) for supported features and gaps.
 
 ## Other limitations
 
 Polaris Engine is not a complete browser engine and does not yet have full Scramjet or Ultraviolet feature parity. The code migration toolkit is a static analyser and controlled codemod foundation, not a universal one-click converter. Runtime APIs differ between legacy versions and applications, so developers must review the generated migration plan and test each port. Platform adapters wrap native browser functionality; they do not emulate missing APIs or make blocked network connections work.
 
-See [docs/ROADMAP.md](docs/ROADMAP.md), [docs/TRANSPORT.md](docs/TRANSPORT.md), [docs/MIGRATION.md](docs/MIGRATION.md), [docs/CODE-MIGRATION.md](docs/CODE-MIGRATION.md), [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md), [docs/FETCH-ADAPTER.md](docs/FETCH-ADAPTER.md), [docs/REALTIME-ADAPTERS.md](docs/REALTIME-ADAPTERS.md), [docs/WEB-STORAGE.md](docs/WEB-STORAGE.md) and [docs/SESSION-PERSISTENCE.md](docs/SESSION-PERSISTENCE.md).
+See [docs/ROADMAP.md](docs/ROADMAP.md), [docs/TRANSPORT.md](docs/TRANSPORT.md), [docs/MIGRATION.md](docs/MIGRATION.md), [docs/CODE-MIGRATION.md](docs/CODE-MIGRATION.md), [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md), [docs/FETCH-ADAPTER.md](docs/FETCH-ADAPTER.md), [docs/REALTIME-ADAPTERS.md](docs/REALTIME-ADAPTERS.md), [docs/WEB-STORAGE.md](docs/WEB-STORAGE.md) and [docs/SESSION-PERSISTENCE.md](docs/SESSION-PERSISTENCE.md), and [docs/RENDERER.md](docs/RENDERER.md).
