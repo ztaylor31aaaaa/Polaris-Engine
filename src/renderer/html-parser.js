@@ -47,7 +47,8 @@ export class HTMLParser {
         const match = token.match(/^([\w:-]+)([\s\S]*)$/);
         if (!match) { parent.appendChild(new TextNode("<" + token + ">")); i = end + 1; continue; }
         const tag = match[1].toLowerCase(), element = new ElementNode(tag, parseAttributes(match[2].replace(/\/\s*$/, "")));
-        parent.appendChild(element); i = end + 1;
+        autoCloseOptional(stack,tag);
+        stack.at(-1).appendChild(element); i = end + 1;
         if (tag === "html") doc.documentElement = element;
         if (tag === "head") doc.head = element;
         if (tag === "body") doc.body = element;
@@ -113,3 +114,15 @@ function findTagEnd(html, start) {
   return -1;
 }
 export function parseHTML(html, options) { return new HTMLParser().parse(html, options); }
+
+function autoCloseOptional(stack,nextTag){
+ const current=stack.at(-1)?.tagName;
+ const blockTags=new Set(["address","article","aside","blockquote","div","dl","fieldset","footer","form","h1","h2","h3","h4","h5","h6","header","hr","main","nav","ol","p","pre","section","table","ul"]);
+ if(current==="p"&&blockTags.has(nextTag)){stack.pop();return;}
+ if(current==="li"&&nextTag==="li"){stack.pop();return;}
+ if((current==="dt"||current==="dd")&&(nextTag==="dt"||nextTag==="dd")){stack.pop();return;}
+ if(current==="option"&&(nextTag==="option"||nextTag==="optgroup")){stack.pop();return;}
+ if(current==="tr"&&nextTag==="tr"){stack.pop();return;}
+ if((current==="td"||current==="th")&&(nextTag==="td"||nextTag==="th")){stack.pop();return;}
+ if(/^h[1-6]$/.test(current||"")&&/^h[1-6]$/.test(nextTag))stack.pop();
+}
