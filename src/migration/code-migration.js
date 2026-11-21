@@ -12,6 +12,10 @@ const LEGACY_PATTERNS = [
   { id: "service-worker-import", engine: "service-worker", severity: "review", pattern: /importScripts\s*\([^)]*(?:scramjet|uv|bare)/gi, message: "Legacy runtime code is imported by a service worker.", suggestion: "Review and replace the worker architecture. Polaris does not silently install a proxy worker." },
   { id: "legacy-script-reference", engine: "runtime", severity: "convertible", pattern: /(?:src|href)\s*=\s*["'][^"']*(?:scramjet|uv\.bundle|baremux)[^"']*["']|["'][^"']*(?:scramjet\.all|uv\.bundle|bare\.client)[^"']*["']/gi, message: "A legacy runtime script or asset reference was found.", suggestion: "Remove the legacy asset reference after porting its application responsibilities to Polaris modules." },
   { id: "global-rewrite", engine: "runtime", severity: "review", pattern: /\b(location\.href|window\.location|fetch\s*\()/g, message: "Direct browser navigation or Fetch usage found.", suggestion: "Review whether native navigation/fetch or a Polaris adapter is appropriate; these calls are not automatically rewritten." }
+  ,
+  { id: "local-storage", engine: "storage", severity: "review", pattern: /\\b(?:window\\.)?localStorage\\.(?:getItem|setItem|removeItem|clear)\\b/g, message: "Direct localStorage access found.", suggestion: "Consider WebStorageAdapter for namespaced JSON storage; confirm string-based legacy semantics are not relied upon." },
+  { id: "session-storage", engine: "storage", severity: "review", pattern: /\\b(?:window\\.)?sessionStorage\\.(?:getItem|setItem|removeItem|clear)\\b/g, message: "Direct sessionStorage access found.", suggestion: "Consider WebStorageAdapter for namespaced session storage; tab snapshots can use SessionPersistence." },
+  { id: "indexeddb-access", engine: "storage", severity: "review", pattern: /\\bindexedDB\\.(?:open|deleteDatabase)\\s*\\(/g, message: "Direct IndexedDB lifecycle access found.", suggestion: "Consider IndexedDBStore for promise-based object-store operations; existing schemas need an explicit migration." }
 ];
 
 const asFileMap = files => {
@@ -36,7 +40,8 @@ export function analyzeLegacyProject(files) {
         id: rule.id, path, engine: rule.engine, severity: rule.severity,
         occurrences: matches.length,
         lines: [...new Set(matches.map(match => content.slice(0, match.index).split("\n").length))],
-        message: rule.message, suggestion: rule.suggestion
+        message: rule.message, suggestion: rule.suggestion,
+        migration: getFindingMapping(rule.id)
       });
     }
   }
@@ -118,15 +123,37 @@ export function createMigrationPlan(analysis) {
 }
 
 const MIGRATION_MAPPINGS = Object.freeze([
-  { legacy: "ScramjetController / Ultraviolet runtime startup", polaris: ["RuntimeManager", "TabRuntime", "TabManager"], notes: "Rebuild startup and disposal around explicit Polaris runtime lifecycle." },
-  { legacy: "Scramjet or Ultraviolet URL handling", polaris: ["NavigationController", "UrlWatcher", "resolveAddress"], notes: "Use native HTTP(S) URL handling; do not assume old URL rewriting semantics are interchangeable." },
-  { legacy: "Legacy proxied iframe/view lifecycle", polaris: ["ViewAdapter", "FrameController"], notes: "Review sandbox flags, origin checks and messaging. Polaris does not rewrite network traffic." },
-  { legacy: "Legacy BareMux / Epoxy transport", polaris: ["TransportProviderManager"], notes: "Only register a provider authorised for the deployment; native Fetch/WebSocket are separate browser APIs." },
-  { legacy: "Legacy runtime service worker", polaris: ["WorkerManager", "MessageRPC"], notes: "Port worker tasks and messaging independently; do not carry over proxy worker code." },
-  { legacy: "Runtime browser API feature checks", polaris: ["createFeatureProfile", "createBrowserSurface"], notes: "Gate optional APIs by feature detection and provide application-level fallbacks." }
+  { id: "scramjet-controller", legacy: "ScramjetController / Ultraviolet runtime startup", confidence: "medium", polaris: ["createLegacyMigrationFacade", "RuntimeManager", "TabRuntime", "TabManager"], importPath: "@polaris/engine", notes: "The lifecycle facade can replace common init/open/navigate/close patterns, but proxy-specific behaviour must be ported separately.", example: 'const controller = createLegacyMigrationFacade({ tabs, views, runtimes });' },
+  { id: "legacy-url-codec", legacy: "Scramjet or Ultraviolet URL encoding and rewriting", confidence: "manual", polaris: ["NavigationController", "UrlWatcher", "resolveAddress", "inspectUrl"], importPath: "@polaris/engine", notes: "Native URL tools handle ordinary HTTP(S) addresses only. Rewritten proxy URLs are not equivalent and must be redesigned." },
+  { id: "legacy-script-reference", legacy: "Legacy runtime script and asset loading", confidence: "manual", polaris: ["RuntimeManager", "ViewAdapter"], importPath: "@polaris/engine", notes: "Remove obsolete runtime assets only after replacing the application responsibilities they provided." },
+  { id: "bare-mux", legacy: "Legacy BareMux / Epoxy transport", confidence: "manual", polaris: ["TransportProviderManager"], importPath: "@polaris/engine", notes: "No automatic transport replacement is proposed. Use native APIs or a provider explicitly authorised for the deployment." },
+  { id: "scramjet-worker", legacy: "Legacy runtime worker responsibilities", confidence: "medium", polaris: ["WorkerManager", "MessageRPC"], importPath: "@polaris/engine", notes: "Port independent worker tasks and message contracts; do not copy proxy worker code." },
+  { id: "service-worker-import", legacy: "Legacy runtime service worker", confidence: "manual", polaris: ["WorkerManager", "MessageRPC"], importPath: "@polaris/engine", notes: "Review the worker's purpose line by line. These APIs do not replace a proxy service worker." },
+  { id: "local-storage", legacy: "Direct localStorage calls", confidence: "medium", polaris: ["WebStorageAdapter"], importPath: "@polaris/engine", example: 'const storage = new WebStorageAdapter({ storage: localStorage, prefix: "my-app:" });', notes: "Adapter stores JSON values under a namespace. getItem/setItem string semantics and shared-key access need deliberate handling." },
+  { id: "session-storage", legacy: "Direct sessionStorage calls", confidence: "medium", polaris: ["WebStorageAdapter", "SessionPersistence"], importPath: "@polaris/engine", example: 'const storage = new WebStorageAdapter({ storage: sessionStorage, prefix: "my-app:" });', notes: "Use WebStorageAdapter for namespaced values. SessionPersistence stores tab metadata snapshots, not page state or credentials." },
+  { id: "indexeddb-access", legacy: "Direct IndexedDB database lifecycle", confidence: "medium", polaris: ["IndexedDBStore"], importPath: "@polaris/engine", notes: "The wrapper handles object-store operations, but it does not automatically convert an existing schema or database version." },
+  { id: "global-rewrite", legacy: "Direct browser navigation and Fetch calls", confidence: "manual", polaris: ["NavigationController", "FetchAdapter"], importPath: "@polaris/engine", notes: "Choose native navigation or FetchAdapter based on actual requirements; no call-site conversion is assumed." },
+  { id: "ultraviolet-config", legacy: "Ultraviolet configuration and client APIs", confidence: "manual", polaris: ["SettingsManager", "NavigationController", "ViewAdapter"], importPath: "@polaris/engine", notes: "Map each setting and runtime responsibility individually; there is no universal one-to-one replacement." },
+  { id: "scramjet-config", legacy: "Scramjet configuration", confidence: "manual", polaris: ["SettingsManager", "PermissionManager", "ViewAdapter"], importPath: "@polaris/engine", notes: "Map each option explicitly. Do not copy unknown configuration fields." },
+  { id: "ultraviolet-import", legacy: "Ultraviolet module imports", confidence: "manual", polaris: ["RuntimeManager", "NavigationController", "ViewAdapter"], importPath: "@polaris/engine", notes: "Select APIs based on what the imported module actually does; an import name alone is insufficient." },
+  { id: "scramjet-import", legacy: "Scramjet module imports", confidence: "manual", polaris: ["RuntimeManager", "NavigationController", "ViewAdapter"], importPath: "@polaris/engine", notes: "Select APIs based on what the imported module actually does; an import name alone is insufficient." },
+  { id: "legacy-side-effect-import", legacy: "Legacy runtime side-effect imports", confidence: "manual", polaris: ["RuntimeManager"], importPath: "@polaris/engine", notes: "Identify and port each side effect before removing the import." },
+  { id: "legacy-url-codec", legacy: "Legacy URL codec helpers", confidence: "manual", polaris: ["NavigationController", "UrlWatcher", "inspectUrl", "resolveAddress"], importPath: "@polaris/engine", notes: "Only ordinary HTTP(S) URL parsing is a plausible match; proxy rewriting must not be substituted with URL parsing." },
+  { id: "scramjet-worker", legacy: "Scramjet worker references", confidence: "manual", polaris: ["WorkerManager", "MessageRPC"], importPath: "@polaris/engine", notes: "Worker tasks can be ported separately; do not reuse legacy proxy worker code." },
+  { id: "ultraviolet-class", legacy: "Ultraviolet runtime class", confidence: "manual", polaris: ["RuntimeManager", "TabRuntime"], importPath: "@polaris/engine", notes: "Identify runtime responsibilities before choosing Polaris lifecycle APIs." }
 ]);
 
-export function getMigrationMappings({ engine = "all" } = {}) {
-  const mappings = MIGRATION_MAPPINGS.filter(item => engine === "all" || item.legacy.toLowerCase().includes(String(engine).toLowerCase()));
-  return mappings.map(item => ({ ...item, polaris: [...item.polaris] }));
+function getFindingMapping(id) {
+  const mapping = MIGRATION_MAPPINGS.find(item => item.id === id);
+  if (!mapping) return null;
+  const { id: _id, ...publicMapping } = mapping;
+  return { ...publicMapping, polaris: [...mapping.polaris] };
+}
+
+export function getMigrationMappings({ engine = "all", confidence = "all" } = {}) {
+  const mappings = MIGRATION_MAPPINGS.filter(item =>
+    (engine === "all" || item.legacy.toLowerCase().includes(String(engine).toLowerCase())) &&
+    (confidence === "all" || item.confidence === confidence)
+  );
+  return mappings.map(({ id, ...item }) => ({ ...item, polaris: [...item.polaris] }));
 }
