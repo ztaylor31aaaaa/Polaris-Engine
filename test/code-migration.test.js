@@ -50,3 +50,14 @@ test("migration plan includes concrete Polaris API mapping suggestions", () => {
   assert.ok(plan.mappings.some(item => item.polaris.includes("RuntimeManager")));
   assert.ok(getMigrationMappings({ engine: "ultraviolet" }).length > 0);
 });
+
+test("scanner recognises legacy config and worker APIs", () => {
+  const result = analyzeLegacyProject({
+    "config.js": 'const scramjetConfig = {}; const uvConfig = {};',
+    "worker.js": 'new ScramjetServiceWorker(); new UVServiceWorker(); new BareServer();'
+  });
+  assert.ok(result.findings.some(item => item.id === "scramjet-config"));
+  assert.ok(result.findings.some(item => item.id === "ultraviolet-config"));
+  assert.ok(result.findings.some(item => item.id === "scramjet-worker"));
+  assert.ok(result.findings.some(item => item.id === "bare-mux"));
+});
