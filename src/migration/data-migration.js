@@ -42,21 +42,21 @@ function parseBookmarkHtml(input) {
   const rows = [];
   const folders = [];
   let pendingFolder = null;
-  const tokens = String(input).match(/<\\/?(?:DL|DT)\\b[^>]*>|<H3\\b[^>]*>[\\s\\S]*?<\\/H3>|<A\\b[^>]*?href\\s*=\\s*(["'])(.*?)\\1[^>]*>[\\s\\S]*?<\\/A>/gi) || [];
+  const tokens = String(input).match(/<\/?(?:DL|DT)\b[^>]*>|<H3\b[^>]*>[\s\S]*?<\/H3>|<A\b[^>]*?href\s*=\s*(["'])(.*?)\1[^>]*>[\s\S]*?<\/A>/gi) || [];
   for (const token of tokens) {
-    if (/^<H3\\b/i.test(token)) {
+    if (/^<H3\b/i.test(token)) {
       pendingFolder = decodeHtml(token.replace(/<[^>]*>/g, "").trim()).slice(0, 60) || "Folder";
-    } else if (/^<DL\\b/i.test(token)) {
+    } else if (/^<DL\b/i.test(token)) {
       if (pendingFolder) folders.push(pendingFolder);
       pendingFolder = null;
-    } else if (/^<\\/DL/i.test(token)) {
+    } else if (/^<\/DL/i.test(token)) {
       if (folders.length) folders.pop();
       pendingFolder = null;
-    } else if (/^<A\\b/i.test(token)) {
-      const match = token.match(/href\\s*=\\s*(["'])(.*?)\\1/i);
+    } else if (/^<A\b/i.test(token)) {
+      const match = token.match(/href\s*=\s*(["'])(.*?)\1/i);
       if (!match) continue;
       const url = decodeHtml(match[2]);
-      const title = decodeHtml(token.replace(/^<[A]+\\b[^>]*>/i, "").replace(/<\\/A>$/i, "").replace(/<[^>]*>/g, "").trim());
+      const title = decodeHtml(token.replace(/^<[A]+\b[^>]*>/i, "").replace(/<\/A>$/i, "").replace(/<[^>]*>/g, "").trim());
       if (safeUrl(url)) rows.push({ url: safeUrl(url), title: title || url, folder: folders.join("/") || "Imported" });
     }
   }
