@@ -23,11 +23,11 @@ export class PolarisRenderer {
     this.onNavigate=options.onNavigate??null;this.onError=options.onError??(()=>{});
     this._clickHandler=e=>this._handlePointer(e,"click");this._pointerHandler=e=>this._handlePointer(e,"pointerdown");
     this.canvas?.addEventListener?.("click",this._clickHandler);this.canvas?.addEventListener?.("pointerdown",this._pointerHandler);
-    this.viewportState.onChange(state=>{this.viewport={width:state.width,height:state.height};this.render();});
+    this.viewportState.onChange(state=>{this.viewport={width:state.width,height:state.height};this.styles.setViewport(this.viewport);this.render();});
   }
   _installDocument(html,options={}){
     this.document=this.parser.parse(html,options);this.runtime=new PolarisDocumentRuntime({document:this.document,onNavigate:(url,navOptions)=>this.navigate(url,navOptions),onSubmit:(form)=>this._submitForm(form)});
-    this.runtime.decorateTree();this.runtime.viewport=this.viewport;this.styles.clearStylesheets();
+    this.runtime.decorateTree();this.runtime.viewport=this.viewport;this.styles.setViewport(this.viewport);this.styles.clearStylesheets();
     for(const style of this.document.querySelectorAll("style"))this.styles.addStylesheet(style.textContent);
     this.history._navigate(this.document.url,null,options.replaceHistory??true);
     return this.document;
