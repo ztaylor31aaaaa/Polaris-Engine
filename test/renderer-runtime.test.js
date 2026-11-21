@@ -180,3 +180,24 @@ test("worker-side host manages isolated contexts and evaluates through adapter",
  await new Promise(resolve=>setTimeout(resolve,0));assert.equal(scope.messages[1].result.length,3);
  await host.dispose();assert.equal(host.contextCount,0);
 });
+
+test("worker script host supports asynchronous DOM bridge round trips",async()=>{
+ class FakeScope{
+  listeners=new Map();messages=[];
+  addEventListener(type,fn){this.listeners.set(type,fn);}
+  removeEventListener(type){this.listeners.delete(type);}
+  postMessage(message){this.messages.push(message);}
+  send(data){this.listeners.get("message")?.({data});}
+ }
+ let bridge;
+ const scope=new FakeScope(),host=installPolarisScriptWorker(scope,{async createContext(options){bridge=options.bridge;return {async evaluate(){return await bridge.call({type:"call",id:7,method:"getAttribute",args:{nodeId:1,name:"id"}});}};}});
+ scope.send({channel:"polaris-script",type:"create-context",id:1});
+ await new Promise(resolve=>setTimeout(resolve,0));
+ const contextId=scope.messages[0].result.contextId;
+ scope.send({channel:"polaris-script",type:"evaluate",id:2,contextId,source:"read id"});
+ await new Promise(resolve=>setTimeout(resolve,0));
+ const bridgeCall=scope.messages.find(message=>message.type==="bridge-call");
+ assert.ok(bridgeCall);scope.send({channel:"polaris-script",type:"bridge-result",id:bridgeCall.id,result:"app-root"});
+ await new Promise(resolve=>setTimeout(resolve,0));
+ assert.equal(scope.messages.at(-1).result,"app-root");await host.dispose();
+});
