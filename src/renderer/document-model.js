@@ -132,6 +132,17 @@ export class ElementNode extends PolarisNode {
     return !event.defaultPrevented;
   }
   get children() { return this.childNodes.filter(n => n instanceof ElementNode); }
+  get firstElementChild() { return this.children[0] ?? null; }
+  get lastElementChild() { return this.children.at(-1) ?? null; }
+  get childElementCount() { return this.children.length; }
+  get nextElementSibling() { let n=this.nextSibling;while(n&&!(n instanceof ElementNode))n=n.nextSibling;return n; }
+  get previousElementSibling() { let n=this.previousSibling;while(n&&!(n instanceof ElementNode))n=n.previousSibling;return n; }
+  append(...nodes) { for(const node of nodes)this.appendChild(typeof node==="string"?new TextNode(node):node); }
+  prepend(...nodes) { let ref=this.firstChild;for(const node of nodes)this.insertBefore(typeof node==="string"?new TextNode(node):node,ref); }
+  getElementsByClassName(name) { const wanted=String(name).trim().split(/\\s+/).filter(Boolean);return [...this.walk()].filter(n=>n instanceof ElementNode&&wanted.every(c=>n.classList.contains(c))); }
+  matches(selector) { return matchesSelector(this,selector); }
+  closest(selector) { for(let node=this;node instanceof ElementNode;node=node.parentElement)if(node.matches(selector))return node;return null; }
+  toggleAttribute(name,force) { const has=this.hasAttribute(name),next=force??!has;if(next)this.setAttribute(name,"");else this.removeAttribute(name);return next; }
   get innerText() { return this.textContent; }
   get innerHTML() { return this.childNodes.map(serializeNode).join(""); }
   querySelector(selector) { return queryWithin(this, selector, false)[0] ?? null; }
