@@ -32,7 +32,7 @@ export function createLegacyMigrationFacade({ tabs, views, runtimes = null } = {
       tabs.update?.(tab.id, { url: target.href, title });
       return { tab, frame, url: target.href };
     } catch (error) {
-      if (runtimeStarted) await runtimes.stop(tab.id, "view-mount-failed").catch(() => {});
+      if (runtimeStarted) { try { await runtimes.stop(tab.id, "view-mount-failed"); } catch {} }
       if (created) tabs.close(tab.id);
       managedTabs.delete(tab.id);
       throw error;
