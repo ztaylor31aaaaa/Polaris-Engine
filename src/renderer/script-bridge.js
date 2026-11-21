@@ -27,7 +27,8 @@ export class PolarisScriptBridge {
     this.handlers.set("addEventListener",args=>{
       const element=this._element(args.nodeId),key=String(args.listenerId);
       if(this.eventSubscriptions.has(key))return true;
-      const callback=event=>{this.pendingEvents.push({listenerId:key,type:event.type,targetNodeId:event.target?.nodeId??null,currentTargetNodeId:event.currentTarget?.nodeId??null,defaultPrevented:event.defaultPrevented,detail:event.detail??null});};
+      if(this.eventSubscriptions.size>=500)throw new Error("Event subscription limit reached");
+      const callback=event=>{if(this.pendingEvents.length<1000)this.pendingEvents.push({listenerId:key,type:event.type,targetNodeId:event.target?.nodeId??null,currentTargetNodeId:event.currentTarget?.nodeId??null,defaultPrevented:event.defaultPrevented,detail:event.detail??null});};
       element.addEventListener(args.eventType,callback,{once:Boolean(args.once),capture:Boolean(args.capture)});
       this.eventSubscriptions.set(key,{element,eventType:args.eventType,callback,capture:Boolean(args.capture)});return true;
     });
@@ -48,5 +49,6 @@ export class PolarisScriptBridge {
     catch(error){return {type:"error",id:message.id,error:String(error?.message??error)};}
   }
   createRequest(method,args={}){return {type:"call",id:++this.sequence,method,args};}
-  close(){this.closed=true;this.handlers.clear();}
+  drainEvents(){const events=this.pendingEvents;this.pendingEvents=[];return events;}
+  close(){this.closed=true;for(const entry of this.eventSubscriptions.values())entry.element.removeEventListener(entry.eventType,entry.callback,{capture:entry.capture});this.eventSubscriptions.clear();this.pendingEvents=[];this.handlers.clear();}
 }
