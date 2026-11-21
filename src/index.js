@@ -6,6 +6,7 @@ export { UrlWatcher } from "./navigation/url-watcher.js";
 export { TabManager } from "./tabs/tab-manager.js";
 export { JsonStore, BookmarkStore, HistoryStore } from "./storage/stores.js";
 export { WebStorageAdapter } from "./storage/web-storage-adapter.js";
+export { SessionPersistence } from "./storage/session-persistence.js";
 export { CacheStore } from "./storage/cache-store.js";
 export { IndexedDBStore } from "./storage/indexeddb-store.js";
 export { runDiagnostics } from "./diagnostics/index.js";
