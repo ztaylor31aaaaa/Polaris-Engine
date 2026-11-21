@@ -38,24 +38,28 @@ function createFakeIndexedDB({ failRequest = false, abortTransaction = false } =
       const tx = {
         error: abortTransaction ? new Error("transaction aborted") : null,
         objectStore() {
+          const makeRequest = () => {
+            const request = {
+              error: failRequest ? new Error("request failed") : null,
+            };
+            queueMicrotask(() => {
+              if (failRequest) {
+                request.onerror?.();
+                tx.onerror?.();
+                tx.onabort?.();
+              } else {
+                request.result = { id: "one" };
+                request.onsuccess?.();
+                tx.oncomplete?.();
+              }
+            });
+            return request;
+          };
           return {
-            get() {
-              const request = {
-                error: failRequest ? new Error("request failed") : null,
-              };
-              queueMicrotask(() => {
-                if (failRequest) {
-                  request.onerror?.();
-                  tx.onerror?.();
-                  tx.onabort?.();
-                } else {
-                  request.result = { id: "one" };
-                  request.onsuccess?.();
-                  tx.oncomplete?.();
-                }
-              });
-              return request;
-            },
+            get: makeRequest,
+            delete: makeRequest,
+            put: makeRequest,
+            clear: makeRequest,
           };
         },
       };
