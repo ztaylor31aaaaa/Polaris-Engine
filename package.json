@@ -2,6 +2,9 @@
   "name": "@polaris/engine",
   "version": "0.6.0",
   "private": false,
+  "bin": {
+    "polaris-migrate": "./bin/polaris-migrate.js"
+  },
   "type": "module",
   "description": "Modular browser-runtime framework for Polaris",
   "exports": {
