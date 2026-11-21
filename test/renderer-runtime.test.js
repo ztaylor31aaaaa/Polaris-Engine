@@ -161,3 +161,22 @@ test("worker engine adapter routes create, evaluate and dispose RPC calls",async
  const result=await context.evaluate("2 + 2",{filename:"test.js"});
  assert.equal(result.value,5);await context.dispose();await adapter.close();assert.equal(worker.terminated,true);
 });
+
+import { installPolarisScriptWorker } from "../src/renderer/script-worker-host.js";
+
+test("worker-side host manages isolated contexts and evaluates through adapter",async()=>{
+ class FakeScope{
+  listeners=new Map();messages=[];
+  addEventListener(type,fn){this.listeners.set(type,fn);}
+  removeEventListener(type){this.listeners.delete(type);}
+  postMessage(message){this.messages.push(message);}
+  send(data){this.listeners.get("message")?.({data});}
+ }
+ const scope=new FakeScope(),host=installPolarisScriptWorker(scope,{async createContext(){return {async evaluate(source){return {length:source.length};},async dispose(){}};}});
+ scope.send({channel:"polaris-script",type:"create-context",id:1,permissions:[],limits:{}});
+ await new Promise(resolve=>setTimeout(resolve,0));
+ const contextId=scope.messages[0].result.contextId;assert.equal(host.contextCount,1);
+ scope.send({channel:"polaris-script",type:"evaluate",id:2,contextId,source:"abc"});
+ await new Promise(resolve=>setTimeout(resolve,0));assert.equal(scope.messages[1].result.length,3);
+ await host.dispose();assert.equal(host.contextCount,0);
+});
