@@ -73,17 +73,36 @@ export class IndexedDBStore {
     const db = await this.open();
     return new Promise((resolve, reject) => {
       let transaction;
+      let settled = false;
+      const succeed = value => {
+        if (settled) return;
+        settled = true;
+        resolve(value);
+      };
+      const fail = error => {
+        if (settled) return;
+        settled = true;
+        reject(error || new Error("IndexedDB operation failed."));
+      };
+
       try {
         transaction = db.transaction(this.storeName, mode);
         const request = operation(transaction.objectStore(this.storeName));
         let result;
         request.onsuccess = () => { result = request.result; };
-        request.onerror = () => reject(request.error || new Error("IndexedDB request failed."));
-        transaction.oncomplete = () => resolve(result);
-        transaction.onerror = () => reject(transaction.error || new Error("IndexedDB transaction failed."));
-        transaction.onabort = () => reject(transaction.error || new Error("IndexedDB transaction aborted."));
+        request.onerror = () => {
+          fail(request.error || new Error("IndexedDB request failed."));
+        };
+        transaction.oncomplete = () => succeed(result);
+        transaction.onerror = () => {
+          fail(transaction.error || new Error("IndexedDB transaction failed."));
+        };
+        transaction.onabort = () => {
+          fail(transaction.error || new Error("IndexedDB transaction aborted."));
+        };
       } catch (error) {
-        reject(error);
+        fail(error);
+        try { transaction?.abort(); } catch {}
       }
     });
   }
@@ -134,22 +153,44 @@ export class IndexedDBStore {
     const db = await this.open();
     return new Promise((resolve, reject) => {
       let transaction;
+      let settled = false;
+      const succeed = value => {
+        if (settled) return;
+        settled = true;
+        resolve(value);
+      };
+      const fail = error => {
+        if (settled) return;
+        settled = true;
+        reject(error || new Error("IndexedDB batch failed."));
+      };
+
       try {
         transaction = db.transaction(this.storeName, "readwrite");
         const store = transaction.objectStore(this.storeName);
         for (const operation of operations) {
-          if (operation.type === "clear") store.clear();
-          if (operation.type === "delete") store.delete(operation.key);
+          let request;
+          if (operation.type === "clear") request = store.clear();
+          if (operation.type === "delete") request = store.delete(operation.key);
           if (operation.type === "put") {
-            if (this.keyPath || operation.key === undefined) store.put(operation.value);
-            else store.put(operation.value, operation.key);
+            request = this.keyPath || operation.key === undefined
+              ? store.put(operation.value)
+              : store.put(operation.value, operation.key);
           }
+          if (request) request.onerror = () => {
+            fail(request.error || new Error("IndexedDB batch request failed."));
+          };
         }
-        transaction.oncomplete = () => resolve(true);
-        transaction.onerror = () => reject(transaction.error || new Error("IndexedDB batch failed."));
-        transaction.onabort = () => reject(transaction.error || new Error("IndexedDB batch was aborted."));
+        transaction.oncomplete = () => succeed(true);
+        transaction.onerror = () => {
+          fail(transaction.error || new Error("IndexedDB batch failed."));
+        };
+        transaction.onabort = () => {
+          fail(transaction.error || new Error("IndexedDB batch was aborted."));
+        };
       } catch (error) {
-        reject(error);
+        fail(error);
+        try { transaction?.abort(); } catch {}
       }
     });
   }
