@@ -26,10 +26,11 @@ function tabRows(input) {
     return { title: text(item?.title || item?.name || url || "Imported tab", 120), url: url || "", pinned: Boolean(item?.pinned), group: text(item?.group || "", 40) };
   }).filter(item => item.url || item.title);
 }
-function flattenBookmarksTree(nodes, output = []) {
+function flattenBookmarksTree(nodes, output = [], path = []) {
   for (const node of nodes || []) {
-    if (node.url) output.push({ url: node.url, title: node.name || node.title, folder: "Imported" });
-    if (Array.isArray(node.children)) flattenBookmarksTree(node.children, output);
+    const nextPath = node.children ? [...path, text(node.name || node.title || "Folder", 60)] : path;
+    if (node.url) output.push({ url: node.url, title: node.name || node.title, folder: path.join("/") || "Imported" });
+    if (Array.isArray(node.children)) flattenBookmarksTree(node.children, output, nextPath);
   }
   return output;
 }
@@ -39,11 +40,25 @@ function decodeHtml(value) {
 }
 function parseBookmarkHtml(input) {
   const rows = [];
-  const pattern = /<a\b[^>]*?href\s*=\s*(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a>/gi;
-  for (const match of String(input).matchAll(pattern)) {
-    const url = decodeHtml(match[2]);
-    const title = decodeHtml(match[3].replace(/<[^>]*>/g, "").trim());
-    if (safeUrl(url)) rows.push({ url, title: title || url, folder: "Imported" });
+  const folders = [];
+  let pendingFolder = null;
+  const tokens = String(input).match(/<\\/?(?:DL|DT)\\b[^>]*>|<H3\\b[^>]*>[\\s\\S]*?<\\/H3>|<A\\b[^>]*?href\\s*=\\s*(["'])(.*?)\\1[^>]*>[\\s\\S]*?<\\/A>/gi) || [];
+  for (const token of tokens) {
+    if (/^<H3\\b/i.test(token)) {
+      pendingFolder = decodeHtml(token.replace(/<[^>]*>/g, "").trim()).slice(0, 60) || "Folder";
+    } else if (/^<DL\\b/i.test(token)) {
+      if (pendingFolder) folders.push(pendingFolder);
+      pendingFolder = null;
+    } else if (/^<\\/DL/i.test(token)) {
+      if (folders.length) folders.pop();
+      pendingFolder = null;
+    } else if (/^<A\\b/i.test(token)) {
+      const match = token.match(/href\\s*=\\s*(["'])(.*?)\\1/i);
+      if (!match) continue;
+      const url = decodeHtml(match[2]);
+      const title = decodeHtml(token.replace(/^<[A]+\\b[^>]*>/i, "").replace(/<\\/A>$/i, "").replace(/<[^>]*>/g, "").trim());
+      if (safeUrl(url)) rows.push({ url: safeUrl(url), title: title || url, folder: folders.join("/") || "Imported" });
+    }
   }
   return rows;
 }
@@ -101,9 +116,22 @@ function escapeHtml(value) {
 }
 /** Produces a Netscape bookmark HTML file accepted by common desktop browsers. */
 export function exportBookmarksHtml(bookmarks = []) {
-  const rows = bookmarkRows(bookmarks);
-  const links = rows.map(item => `<DT><A HREF="${escapeHtml(item.url)}">${escapeHtml(item.title)}</A>`).join("\n");
-  return `<!DOCTYPE NETSCAPE-Bookmark-file-1>\n<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">\n<TITLE>Bookmarks</TITLE>\n<H1>Bookmarks</H1>\n<DL><p>\n${links}\n</DL><p>\n`;
+  const root = { folders: new Map(), links: [] };
+  for (const item of bookmarkRows(bookmarks)) {
+    const parts = String(item.folder || "Imported").split("/").map(part => part.trim()).filter(Boolean).slice(0, 8);
+    let node = root;
+    for (const part of parts) {
+      if (!node.folders.has(part)) node.folders.set(part, { folders: new Map(), links: [] });
+      node = node.folders.get(part);
+    }
+    node.links.push(item);
+  }
+  const render = node => {
+    const links = node.links.map(item => `<DT><A HREF="${escapeHtml(item.url)}">${escapeHtml(item.title)}</A>`);
+    const folders = [...node.folders.entries()].map(([name, child]) => `<DT><H3>${escapeHtml(name)}</H3>\n<DL><p>\n${render(child)}\n</DL><p>`);
+    return [...links, ...folders].join("\n");
+  };
+  return `<!DOCTYPE NETSCAPE-Bookmark-file-1>\n<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">\n<TITLE>Bookmarks</TITLE>\n<H1>Bookmarks</H1>\n<DL><p>\n${render(root)}\n</DL><p>\n`;
 }
 export function exportPortableData({ bookmarks = [], history = [], tabs = [], settings = {} } = {}) {
   return {
