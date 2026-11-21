@@ -15,7 +15,8 @@ export function installPolarisScriptWorker(scope,engineFactory,options={}){
     try{
       if(message.type==="create-context"){
         if(contexts.size>=maxContexts)throw new Error("Worker context limit reached");
-        const context=await engineFactory.createContext({permissions:message.permissions??[],limits:message.limits??{}});
+        const bridge={call(request){const id=++nextBridge;return new Promise((resolve,reject)=>{pendingBridge.set(id,{resolve,reject});send({type:"bridge-call",id,request});});}};
+        const context=await engineFactory.createContext({bridge,permissions:message.permissions??[],limits:message.limits??{}});
         const contextId="polaris-context-"+(++nextContext);contexts.set(contextId,context);
         send({type:"result",id:message.id,result:{contextId}});return;
       }
@@ -36,6 +37,6 @@ export function installPolarisScriptWorker(scope,engineFactory,options={}){
   scope.addEventListener("message",listener);
   return {
     get contextCount(){return contexts.size;},
-    async dispose(){if(closed)return;closed=true;scope.removeEventListener?.("message",listener);for(const context of contexts.values())await context.dispose?.();contexts.clear();}
+    async dispose(){if(closed)return;closed=true;scope.removeEventListener?.("message",listener);for(const context of contexts.values())await context.dispose?.();contexts.clear();for(const pending of pendingBridge.values())pending.reject(new Error("Script worker host disposed"));pendingBridge.clear();}
   };
 }
