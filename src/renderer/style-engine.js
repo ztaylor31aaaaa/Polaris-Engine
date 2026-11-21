@@ -15,7 +15,23 @@ const INITIAL = {
   flexDirection:"row", flexWrap:"nowrap", justifyContent:"flex-start", alignItems:"stretch", gap:"0"
 };
 const INHERITED = new Set(["color","fontFamily","fontSize","fontWeight","fontStyle","lineHeight","textAlign","whiteSpace","visibility"]);
-const BLOCK = new Set(["html","body","div","main","section","article","header","footer","nav","aside","p","h1","h2","h3","h4","ul","ol","li","form","pre","blockquote"]);
+const BLOCK = new Set(["html","body","div","main","section","article","header","footer","nav","aside","p","h1","h2","h3","h4","h5","h6","ul","ol","li","form","pre","blockquote","table","tr"]);
+const UA = {
+  body:{marginTop:"8px",marginRight:"8px",marginBottom:"8px",marginLeft:"8px"},
+  p:{marginTop:"1em",marginBottom:"1em"},
+  h1:{fontSize:"32px",fontWeight:"700",marginTop:"0.67em",marginBottom:"0.67em"},
+  h2:{fontSize:"24px",fontWeight:"700",marginTop:"0.83em",marginBottom:"0.83em"},
+  h3:{fontSize:"19px",fontWeight:"700",marginTop:"1em",marginBottom:"1em"},
+  h4:{fontSize:"16px",fontWeight:"700"},
+  h5:{fontSize:"13px",fontWeight:"700"},
+  h6:{fontSize:"11px",fontWeight:"700"},
+  strong:{fontWeight:"700"},b:{fontWeight:"700"},em:{fontStyle:"italic"},i:{fontStyle:"italic"},
+  small:{fontSize:"13px"},sub:{fontSize:"12px"},sup:{fontSize:"12px"},
+  pre:{whiteSpace:"pre",fontFamily:"monospace"},code:{fontFamily:"monospace"},
+  button:{fontFamily:"Arial, sans-serif",fontSize:"13px",padding:"2px 6px"},
+  input:{fontFamily:"Arial, sans-serif",fontSize:"13px",padding:"2px"},
+  ul:{paddingLeft:"40px"},ol:{paddingLeft:"40px"},li:{display:"list-item"}
+};
 function px(value, fallback = 0) { const m = String(value ?? "").trim().match(/^(-?(?:\d+\.?\d*|\.\d+))(px)?$/); return m ? Number(m[1]) : fallback; }
 function expandBox(style, base) {
   const value = style[base] ?? "0", parts = value.split(/\s+/).map(v => v.trim()).filter(Boolean);
@@ -30,7 +46,7 @@ export class StyleEngine {
   compute(document) {
     for (const node of document.walk()) {
       if (!(node instanceof ElementNode)) continue;
-      const style = { ...INITIAL };
+      const style = { ...INITIAL, ...(UA[node.tagName] ?? {}) };
       const parent = node.parentNode instanceof ElementNode ? node.parentNode.computedStyle : null;
       if (parent) for (const key of INHERITED) style[key] = parent[key];
       const candidates = new Map();
@@ -54,6 +70,7 @@ export class StyleEngine {
         for (const d of parseDeclarations(inline)) apply(d.property,d.value,d.important,1000,order++);
       }
       for (const [property, item] of candidates) style[property] = item.value;
+      expandBorders(style);
       if (node.hasAttribute("hidden")) style.display = "none";
       if (node.hasAttribute("style")) Object.assign(node.style, Object.fromEntries(parseDeclarations(inline).map(d=>[d.property,d.value])));
       if (style.display === "inline" && BLOCK.has(node.tagName)) style.display = "block";
@@ -63,6 +80,11 @@ export class StyleEngine {
     }
     return document;
   }
+}
+function expandBorders(style) {
+  const border=style.border;
+  if(border){const parts=border.split(/\\s+/);const width=parts.find(v=>/^\\d+(?:\\.\\d+)?px$/.test(v))??"1px";const lineStyle=parts.find(v=>["none","solid","dashed","dotted","double"].includes(v))??"solid";const color=parts.find(v=>v!==width&&v!==lineStyle)??"#000";for(const side of ["Top","Right","Bottom","Left"]){style["border"+side+"Width"]??=width;style["border"+side+"Style"]??=lineStyle;style["border"+side+"Color"]??=color;}}
+  for(const side of ["Top","Right","Bottom","Left"]){const key="border"+side;if(style[key]){const parts=style[key].split(/\\s+/);style[key+"Width"]??=parts.find(v=>/^\\d+(?:\\.\\d+)?px$/.test(v))??"1px";style[key+"Style"]??=parts.find(v=>["none","solid","dashed","dotted","double"].includes(v))??"solid";style[key+"Color"]??=parts.find(v=>v!==style[key+"Width"]&&v!==style[key+"Style"])??"#000";}}
 }
 function awaitlessDeclarations(source) {
   return String(source).split(";").map(part => {
