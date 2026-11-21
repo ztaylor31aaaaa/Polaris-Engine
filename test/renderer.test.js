@@ -27,6 +27,8 @@ test("style engine applies selector and inline cascade", () => {
   const doc=parseHTML('<style>p { color: red } .note { font-size: 20px }</style><p class="note" style="color: blue">Hello</p>');
   const engine=new StyleEngine(); engine.addStylesheet(doc.querySelector("style").textContent); engine.compute(doc);
   const p=doc.querySelector("p");
+  assert.deepEqual(engine.rules.map(rule => rule.selector), ["p", ".note"]);
+  assert.equal(p.classList.contains("note"), true);
   assert.equal(p.computedStyle.color,"blue");
   assert.equal(p.computedStyle.fontSize,"20px");
 });
