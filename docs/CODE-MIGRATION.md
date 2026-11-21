@@ -25,6 +25,8 @@ console.log(plan.steps);
 
 The analyser reports file paths, occurrence counts, line numbers, severity and suggested next steps. It also scans common Vue, Svelte and Astro component files. It recognises common Scramjet, Ultraviolet, BareMux and legacy worker references. Some broad browser API matches are review hints, not proof of a dependency.
 
+Each finding now includes a `migration` recommendation when a known mapping exists. Recommendations include a confidence level (`medium` or `manual`), the relevant Polaris exports, package import path, and notes about semantic differences. You can filter the full mapping catalogue with `getMigrationMappings({ confidence: "medium" })`. A medium-confidence match is a useful starting point, not an automatic code conversion. Proxy transport, rewritten URLs and legacy worker behaviour remain manual-review items.
+
 ## 2. Scan from the command line
 
 After installing the package, run the scanner against an existing project:
