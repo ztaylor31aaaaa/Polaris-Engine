@@ -26,7 +26,7 @@ function mediaMatches(condition,context={}){
   const width=context.width??1024,height=context.height??768,scheme=context.colorScheme??"light";
   for(const query of condition.split(/\s*,\s*/)){
     const q=query.toLowerCase();let valid=true;
-    for(const [,bound,dimension,amount] of q.matchAll(/\\((min|max)-(width|height)\\s*:\\s*([\\d.]+)px\\)/g)){
+    for(const [,bound,dimension,amount] of q.matchAll(/\((min|max)-(width|height)\s*:\s*([\d.]+)px\)/g)){
       const actual=dimension==="width"?width:height,expected=Number(amount);
       if(bound==="min"&&actual<expected)valid=false;
       if(bound==="max"&&actual>expected)valid=false;
