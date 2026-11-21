@@ -7,7 +7,7 @@ Polaris Engine is a modular browser-runtime framework for Polaris. Version 0.6 a
 - **Navigation:** URL resolution and inspection, same-origin checks, history state and navigation events.
 - **Tabs and sessions:** tab lifecycle, pinning, groups, closed-tab recovery and session serialisation.
 - **Runtime:** per-tab runtime lifecycle, resource disposal, abort scopes and runtime limits.
-- **Custom renderer (experimental):** Polaris-owned document tree, HTML tokeniser, CSS parser/cascade, initial block/inline/flex layout and Canvas 2D painter. It does not use an iframe for its own rendering path; see [docs/RENDERER.md](docs/RENDERER.md).
+- **Custom renderer (experimental):** Polaris-owned document tree, HTML parser, CSS cascade and media queries, block/inline/basic flex layout, Canvas 2D painter, DOM events/mutations, form controls, history, images, accessibility tree, and a worker RPC boundary for an externally supplied isolated JavaScript engine. It does not use an iframe for its own rendering path; see [docs/RENDERER.md](docs/RENDERER.md).
 - **Document views:** optional HTTP(S) iframe mounting and cleanup through an adapter; subject to browser framing restrictions.
 - **Platform APIs:** browser feature detection, native Fetch adapter, WebSocket, Server-Sent Events and BroadcastChannel adapters, Web Worker lifecycle, MessagePort RPC and expanded browser capability catalogue.
 - **Frames:** iframe lifecycle controller, sandbox defaults, explicit-origin messaging and frame events.
