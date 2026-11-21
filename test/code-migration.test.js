@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeLegacyProject, convertLegacyProject, createMigrationPlan, getMigrationMappings } from "../src/migration/code-migration.js";
+import { analyzeLegacyProject, convertLegacyProject, createMigrationPlan, createMigrationReport, renderMigrationReport, getMigrationMappings } from "../src/migration/code-migration.js";
 
 test("analyser detects Scramjet and Ultraviolet references without executing source", () => {
   const result = analyzeLegacyProject({
@@ -133,4 +133,39 @@ test("migration mappings can be filtered by confidence", () => {
   assert.ok(medium.length > 0);
   assert.ok(medium.every(item => item.confidence === "medium"));
   assert.ok(getMigrationMappings({ engine: "ultraviolet", confidence: "manual" }).length > 0);
+});
+
+
+test("detailed migration report groups locations and produces ordered steps", () => {
+  const analysis = analyzeLegacyProject({
+    "src/a.js": 'localStorage.setItem("theme", "dark");\\nlocalStorage.getItem("theme");',
+    "src/b.js": 'new ScramjetController();'
+  });
+  const report = createMigrationReport(analysis);
+  assert.equal(report.overview.filesScanned, 2);
+  assert.ok(report.overview.totalOccurrences >= 3);
+  const storage = report.findings.find(item => item.id === "local-storage");
+  assert.equal(storage.occurrences, 2);
+  assert.deepEqual(storage.locations[0].lines, [1, 2]);
+  const storageStep = report.steps.find(item => item.id === "local-storage");
+  assert.equal(storageStep.confidence, "medium");
+  assert.ok(storageStep.starterExample.includes("WebStorageAdapter"));
+  assert.ok(report.steps.every((step, index) => step.order === index + 1));
+});
+
+test("Markdown migration report includes locations, code examples and review warnings", () => {
+  const analysis = analyzeLegacyProject({
+    "src/proxy.js": 'new BareMux();',
+    "src/storage.js": 'localStorage.setItem("mode", "dark");'
+  });
+  const markdown = renderMigrationReport(createMigrationReport(analysis));
+  assert.match(markdown, /Polaris Engine migration report/);
+  assert.match(markdown, /src\\/proxy\\.js/);
+  assert.match(markdown, /WebStorageAdapter/);
+  assert.match(markdown, /network-filter bypass/);
+});
+
+test("detailed report rejects invalid analysis and renderer input", () => {
+  assert.throws(() => createMigrationReport({ schema: 2, findings: [] }), /valid analysis/);
+  assert.throws(() => renderMigrationReport({ schema: 1 }), /valid migration report/);
 });
