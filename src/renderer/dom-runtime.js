@@ -16,7 +16,8 @@ export class PolarisDocumentRuntime extends EventTargetMixin {
     doc.activeElement=this.activeElement;
     doc.addEventListener=(...args)=>EventTargetMixin.prototype.addEventListener.apply(doc,args);
     doc.removeEventListener=(...args)=>EventTargetMixin.prototype.removeEventListener.apply(doc,args);
-    doc._invokeListeners=(...args)=>EventTargetMixin.prototype._invokeListeners.apply(doc,args);\n    doc.dispatchEvent=event=>dispatchPolarisEvent(doc,event);
+    doc._invokeListeners=(...args)=>EventTargetMixin.prototype._invokeListeners.apply(doc,args);
+    doc.dispatchEvent=event=>dispatchPolarisEvent(doc,event);
     doc.defaultView=this.window;
   }
   createElement(tag){const el=new ElementNode(tag);this._decorateElement(el);return el;}
