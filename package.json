@@ -39,6 +39,7 @@
     "./code-migration": "./src/migration/code-migration.js",
     "./legacy-facade": "./src/migration/legacy-facade.js",
     "./compat": "./src/compat/feature-profile.js",
+    "./compat/scramjet-port": "./src/compat/scramjet-port.js",
     "./renderer": "./src/renderer/renderer.js",
     "./renderer/document": "./src/renderer/document-model.js",
     "./renderer/html": "./src/renderer/html-parser.js",
