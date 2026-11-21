@@ -69,3 +69,32 @@ test("viewport emits resize and scroll updates",()=>{
  viewport.resize(800,600,2);viewport.scrollTo(10,20);
  assert.deepEqual(events,["resize","scroll"]);assert.equal(viewport.snapshot().devicePixelRatio,2);
 });
+
+import { createStyleDeclaration } from "../src/renderer/style-declaration.js";
+import { RendererNetworkPolicy } from "../src/renderer/network-policy.js";
+import { getRendererCapabilities } from "../src/renderer/runtime-capabilities.js";
+import { ElementNode } from "../src/renderer/document-model.js";
+
+test("style declaration synchronises kebab and camel case properties",()=>{
+ const el=new ElementNode("div"),style=createStyleDeclaration(el);
+ style.backgroundColor="red";style.setProperty("margin-left","12px");
+ assert.match(el.getAttribute("style"),/background-color:red/);
+ assert.equal(style.getPropertyValue("margin-left"),"12px");
+ style.removeProperty("margin-left");assert.equal(style.marginLeft,"");
+});
+test("selector engine handles structural, sibling and attribute selectors",()=>{
+ const doc=parseHTML('<ul><li data-kind="a">A</li><li class="selected" data-kind="b">B</li><li>C</li></ul>');
+ assert.equal(doc.querySelectorAll("li:nth-child(2)").length,1);
+ assert.equal(doc.querySelectorAll('li[data-kind^="b"]').length,1);
+ assert.equal(doc.querySelectorAll("li + li.selected").length,1);
+ assert.equal(doc.querySelectorAll("li:first-child").length,1);
+});
+test("network policy restricts origins and unsafe methods",()=>{
+ const policy=new RendererNetworkPolicy({allowedOrigins:["https://example.com"]});
+ assert.equal(policy.check("https://example.com/a").method,"GET");
+ assert.throws(()=>policy.check("https://other.example/"),/not permitted/i);
+ assert.throws(()=>policy.check("https://example.com/",{method:"POST"}),/read-only/i);
+});
+test("renderer capability profile is explicit and honest",()=>{
+ const caps=getRendererCapabilities();assert.equal(caps.htmlParsing,true);assert.equal(caps.javascriptExecution,false);assert.equal(caps.cssGrid,false);
+});
