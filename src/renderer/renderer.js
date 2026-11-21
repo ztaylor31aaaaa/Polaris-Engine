@@ -46,7 +46,7 @@ export class PolarisRenderer {
   }
   async _loadImages(options={}){
     this.images.clear();const images=this.document.querySelectorAll("img").filter(el=>el.getAttribute("src"));
-    await Promise.allSettled(images.map(async el=>{const result=await this.imageLoader.load(el.getAttribute("src"),{baseURL:this.document.url,signal:options.signal,credentials:options.credentials});this.images.set(el,result);}));
+    await Promise.allSettled(images.map(async el=>{const result=await this.imageLoader.load(el.getAttribute("src"),{baseURL:this.document.url,signal:options.signal,credentials:options.credentials});this.images.set(el,result);el._intrinsicWidth=result.width;el._intrinsicHeight=result.height;}));
     this.painter.images=this.images;
   }
   async startScripts(options={}){if(!this.scriptRuntime)throw new Error("No isolated ScriptRuntime has been configured");this.scriptRuntime.runtime=this.runtime;return this.scriptRuntime.start(this.document,options);}
