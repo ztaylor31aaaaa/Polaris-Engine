@@ -8,8 +8,8 @@ const outputFlag = args.indexOf("--out");
 const formatFlag = args.indexOf("--format");
 const positional = args.filter((arg, index) =>
   !arg.startsWith("--") &&
-  index !== outputFlag + 1 &&
-  index !== formatFlag + 1
+  (outputFlag < 0 || index !== outputFlag + 1) &&
+  (formatFlag < 0 || index !== formatFlag + 1)
 );
 const root = path.resolve(positional[0] || ".");
 const format = formatFlag >= 0 ? args[formatFlag + 1] : "json";
