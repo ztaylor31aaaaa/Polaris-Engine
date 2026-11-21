@@ -76,8 +76,11 @@ export class IndexedDBStore {
       try {
         transaction = db.transaction(this.storeName, mode);
         const request = operation(transaction.objectStore(this.storeName));
-        request.onsuccess = () => resolve(request.result);
+        let result;
+        request.onsuccess = () => { result = request.result; };
         request.onerror = () => reject(request.error || new Error("IndexedDB request failed."));
+        transaction.oncomplete = () => resolve(result);
+        transaction.onerror = () => reject(transaction.error || new Error("IndexedDB transaction failed."));
         transaction.onabort = () => reject(transaction.error || new Error("IndexedDB transaction aborted."));
       } catch (error) {
         reject(error);
@@ -98,9 +101,10 @@ export class IndexedDBStore {
   }
 
   put(value, key) {
-    return this.#request("readwrite", store => (
-      this.keyPath ? store.put(value) : store.put(value, key)
-    ));
+    return this.#request("readwrite", store => {
+      if (this.keyPath || key === undefined) return store.put(value);
+      return store.put(value, key);
+    });
   }
 
   delete(key) {
@@ -137,7 +141,7 @@ export class IndexedDBStore {
           if (operation.type === "clear") store.clear();
           if (operation.type === "delete") store.delete(operation.key);
           if (operation.type === "put") {
-            if (this.keyPath) store.put(operation.value);
+            if (this.keyPath || operation.key === undefined) store.put(operation.value);
             else store.put(operation.value, operation.key);
           }
         }
