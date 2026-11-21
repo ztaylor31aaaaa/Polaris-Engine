@@ -20,7 +20,7 @@ export class PolarisRenderer {
     this.painter=options.paintEngine??new PaintEngine(options);this.resourceLoader=options.resourceLoader??new ResourceLoader(options.resources);
     this.imageLoader=options.imageLoader??new ImageResourceLoader({resourceLoader:this.resourceLoader});this.images=new Map();
     this.runtime=null;this.document=null;this.history=new PolarisHistory({onChange:entry=>{if(entry)this.loadURL(entry.url,{history:false}).catch(this.onError);}});
-    this.onNavigate=options.onNavigate??((url)=>this.navigate(url));this.onError=options.onError??(()=>{});
+    this.onNavigate=options.onNavigate??null;this.onError=options.onError??(()=>{});
     this._clickHandler=e=>this._handlePointer(e,"click");this._pointerHandler=e=>this._handlePointer(e,"pointerdown");
     this.canvas?.addEventListener?.("click",this._clickHandler);this.canvas?.addEventListener?.("pointerdown",this._pointerHandler);
     this.viewportState.onChange(state=>{this.viewport={width:state.width,height:state.height};this.render();});
@@ -51,7 +51,7 @@ export class PolarisRenderer {
   navigate(url,options={}){
     const resolved=this.resourceLoader.resolve(url,this.document?.url??"about:blank");
     if(options.replace)this.history.replaceState(options.state??null,"",resolved);else this.history.pushState(options.state??null,"",resolved);
-    if(this.onNavigate!==this.navigate)this.onNavigate(resolved,options);
+    if(this.onNavigate)this.onNavigate(resolved,options);
     return resolved;
   }
   back(){return this.history.back();}
