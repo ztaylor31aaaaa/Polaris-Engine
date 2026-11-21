@@ -35,7 +35,9 @@ export class PolarisDocumentRuntime extends EventTargetMixin {
   submit(form,submitter=null){const event=new PolarisEvent("submit",{bubbles:true,cancelable:true,detail:{submitter}});const accepted=this.dispatch(form,event);if(accepted)this.onSubmit(form,submitter);return accepted;}
   _decorateElement(el){
     el.ownerDocument=this.document;
-    el.addEventListener=(...args)=>EventTargetMixin.prototype.addEventListener.apply(el,args);\n    el.removeEventListener=(...args)=>EventTargetMixin.prototype.removeEventListener.apply(el,args);\n    el.dispatchEvent=event=>dispatchPolarisEvent(el,event);
+    el.addEventListener=(...args)=>EventTargetMixin.prototype.addEventListener.apply(el,args);
+    el.removeEventListener=(...args)=>EventTargetMixin.prototype.removeEventListener.apply(el,args);
+    el.dispatchEvent=event=>dispatchPolarisEvent(el,event);
     el.click=()=>this.dispatch(el,new PolarisEvent("click",{bubbles:true,cancelable:true}));
     el.focus=()=>this.focus(el);el.blur=()=>this.blur(el);
     Object.defineProperty(el,"value",{get(){return this._value??this.getAttribute("value")??"";},set(v){this._value=String(v);}});
