@@ -56,6 +56,7 @@ export class StyleEngine {
         if (!previous || rank[0] > previous.rank[0] || (rank[0] === previous.rank[0] && (rank[1] > previous.rank[1] || (rank[1] === previous.rank[1] && rank[2] >= previous.rank[2])))) candidates.set(property,{value,rank});
       };
       for (const rule of this.rules) {
+        if (rule.media && !mediaMatches(rule.media, this.viewport)) continue;
         try {
           const selector = rule.selector.trim();
           const simpleMatch = selector.startsWith(".") && !selector.includes(" ") ? node.classList.contains(selector.slice(1)) :
