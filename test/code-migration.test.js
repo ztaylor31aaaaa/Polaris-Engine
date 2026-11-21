@@ -97,3 +97,11 @@ test("scanner detects side-effect runtime imports and legacy URL helper calls", 
   assert.ok(result.findings.some(item => item.id === "legacy-side-effect-import"));
   assert.ok(result.findings.some(item => item.id === "legacy-url-codec"));
 });
+
+test("scanner detects side-effect imports and legacy URL helper calls", () => {
+  const result = analyzeLegacyProject({
+    "main.js": 'import "@mercuryworkshop/scramjet";\nconst url = __uv$encodeUrl(input);'
+  });
+  assert.ok(result.findings.some(item => item.id === "legacy-side-effect-import"));
+  assert.ok(result.findings.some(item => item.id === "legacy-url-codec"));
+});
